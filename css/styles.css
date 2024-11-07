@@ -1,0 +1,59 @@
+:root {
+  --blue-primary: #1e3d59;
+  --teal: #1abc9c;
+  --coral: #ff6e40;
+  --gray-100: #f5f5f5;
+  --gray-800: #333333;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  line-height: 1.6;
+  background-color: var(--gray-100);
+  color: var(--gray-800);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.main-header {
+  background-color: white;
+  padding: 2rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-header .logo {
+  height: 60px;
+  width: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Quicksand", sans-serif;
+  color: var(--blue-primary);
+}
+
+.welcome-section {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.main-footer {
+  background-color: var(--blue-primary);
+  color: white;
+  padding: 2rem 0;
+  margin-top: 4rem;
+}
