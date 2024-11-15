@@ -1,6 +1,8 @@
-let auth0Client = null;
+import config from "./auth0-config.js";
 
-const configureClient = async () => {
+export let auth0Client = null;
+
+export const configureClient = async () => {
   auth0Client = await createAuth0Client({
     domain: config.domain,
     client_id: config.clientId,
@@ -8,7 +10,7 @@ const configureClient = async () => {
   });
 };
 
-const login = async () => {
+export const login = async () => {
   try {
     await auth0Client.loginWithRedirect();
   } catch (err) {
@@ -16,16 +18,16 @@ const login = async () => {
   }
 };
 
-const logout = () => {
+export const logout = () => {
   auth0Client.logout({
     returnTo: config.returnTo,
   });
 };
 
-const isAuthenticated = async () => {
+export const isAuthenticated = async () => {
   return await auth0Client.isAuthenticated();
 };
 
-const getUser = async () => {
+export const getUser = async () => {
   return await auth0Client.getUser();
 };

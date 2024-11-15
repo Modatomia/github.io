@@ -1,16 +1,17 @@
 import config from "./auth0-config.js";
+import {
+  configureClient,
+  login,
+  logout,
+  isAuthenticated,
+  getUser,
+} from "./auth0-client.js";
 
 let auth0Client = null;
 
-// Inicializar Auth0
 async function initializeAuth0() {
-  auth0Client = await createAuth0Client({
-    domain: config.domain,
-    client_id: config.clientId,
-    redirect_uri: config.redirectUri,
-  });
+  await configureClient();
 
-  // Manejo de callback después del login
   if (window.location.search.includes("code=")) {
     try {
       await auth0Client.handleRedirectCallback();
@@ -24,35 +25,26 @@ async function initializeAuth0() {
   updateUI();
 }
 
-// Actualizar UI basado en estado de autenticación
 async function updateUI() {
-  const isAuthenticated = await auth0Client.isAuthenticated();
+  const authenticated = await isAuthenticated();
   const loginBtn = document.getElementById("login");
   const logoutBtn = document.getElementById("logout");
 
-  loginBtn.style.display = isAuthenticated ? "none" : "block";
-  logoutBtn.style.display = isAuthenticated ? "block" : "none";
+  loginBtn.style.display = authenticated ? "none" : "block";
+  logoutBtn.style.display = authenticated ? "block" : "none";
 
-  if (isAuthenticated) {
-    const user = await auth0Client.getUser();
+  if (authenticated) {
+    const user = await getUser();
     console.log("Usuario autenticado:", user);
   }
 }
 
-// Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
   initializeAuth0();
 
   const loginBtn = document.getElementById("login");
   const logoutBtn = document.getElementById("logout");
 
-  loginBtn.addEventListener("click", async () => {
-    await auth0Client.loginWithRedirect();
-  });
-
-  logoutBtn.addEventListener("click", () => {
-    auth0Client.logout({
-      returnTo: config.returnTo,
-    });
-  });
+  loginBtn.addEventListener("click", login);
+  logoutBtn.addEventListener("click", logout);
 });
