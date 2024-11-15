@@ -1,50 +1,51 @@
 import config from "./auth0-config.js";
-import {
-  configureClient,
-  login,
-  logout,
-  isAuthenticated,
-  getUser,
-} from "./auth0-client.js";
+import createAuth0Client from "@auth0/auth0-spa-js"; // Asegúrate de importar createAuth0Client
 
-let auth0Client = null;
+export let auth0Client = null;
 
-async function initializeAuth0() {
-  auth0Client = await configureClient();
+export const configureClient = async () => {
+  auth0Client = await createAuth0Client({
+    domain: config.domain,
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+  });
+};
 
-  if (window.location.search.includes("code=")) {
-    try {
-      await auth0Client.handleRedirectCallback();
-      window.history.replaceState({}, document.title, window.location.pathname);
-      updateUI();
-    } catch (error) {
-      console.error("Error handling redirect:", error);
-    }
+export const login = async () => {
+  try {
+    await auth0Client.loginWithRedirect();
+  } catch (err) {
+    console.log("Error en login:", err);
   }
+};
 
-  updateUI();
-}
-
-async function updateUI() {
-  const authenticated = await isAuthenticated();
-  const loginBtn = document.getElementById("login");
-  const logoutBtn = document.getElementById("logout");
-
-  loginBtn.style.display = authenticated ? "none" : "block";
-  logoutBtn.style.display = authenticated ? "block" : "none";
-
-  if (authenticated) {
-    const user = await getUser();
-    console.log("Usuario autenticado:", user);
+export const logout = () => {
+  if (auth0Client) {
+    // Asegúrate de que auth0Client no sea null
+    auth0Client.logout({
+      returnTo: config.returnTo,
+    });
+  } else {
+    console.log("auth0Client is not initialized");
   }
-}
+};
 
-document.addEventListener("DOMContentLoaded", () => {
-  initializeAuth0();
+export const isAuthenticated = async () => {
+  if (auth0Client) {
+    // Asegúrate de que auth0Client no sea null
+    return await auth0Client.isAuthenticated();
+  } else {
+    console.log("auth0Client is not initialized");
+    return false;
+  }
+};
 
-  const loginBtn = document.getElementById("login");
-  const logoutBtn = document.getElementById("logout");
-
-  loginBtn.addEventListener("click", login);
-  logoutBtn.addEventListener("click", logout);
-});
+export const getUser = async () => {
+  if (auth0Client) {
+    // Asegúrate de que auth0Client no sea null
+    return await auth0Client.getUser();
+  } else {
+    console.log("auth0Client is not initialized");
+    return null;
+  }
+};
