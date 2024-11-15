@@ -1,5 +1,8 @@
+import { Auth0Client } from '@auth0/auth0-spa-js';
+import { Auth0Client } from './node_modules/@auth0/auth0-spa-js';
+
+
 import config from "./auth0-config.js";
-import createAuth0Client from "@auth0/auth0-spa-js"; // Asegúrate de importar createAuth0Client
 
 export let auth0Client = null;
 
