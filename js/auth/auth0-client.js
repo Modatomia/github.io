@@ -1,40 +1,39 @@
 import config from "./auth0-config.js";
-import { createAuth0Client } from "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
+import { configureClient, login, logout } from "./auth0-client.js";
 
-export let auth0Client = null;
-
-export const configureClient = async () => {
-  auth0Client = await createAuth0Client({
-    domain: config.domain,
-    client_id: config.clientId,
-    redirect_uri: config.redirectUri,
-  });
-  return auth0Client;
-};
-
-export const login = async () => {
+async function initializeAuth0() {
   try {
-    console.log("Intentando login...");
-    await auth0Client.loginWithRedirect();
-  } catch (err) {
-    console.log("Error en login:", err);
-  }
-};
+    await configureClient();
 
-export const logout = () => {
+    if (window.location.search.includes("code=")) {
+      await handleCallback();
+    }
+
+    updateUI();
+  } catch (err) {
+    console.error("Error inicializando Auth0:", err);
+  }
+}
+
+async function handleCallback() {
   try {
-    auth0Client.logout({
-      returnTo: config.returnTo,
-    });
+    await auth0Client.handleRedirectCallback();
+    window.history.replaceState({}, document.title, window.location.pathname);
   } catch (err) {
-    console.log("Error en logout:", err);
+    console.error("Error manejando callback:", err);
   }
-};
+}
 
-export const isAuthenticated = async () => {
-  return await auth0Client.isAuthenticated();
-};
+async function updateUI() {
+  try {
+    const loginBtn = document.getElementById("login");
+    const logoutBtn = document.getElementById("logout");
 
-export const getUser = async () => {
-  return await auth0Client.getUser();
-};
+    loginBtn.addEventListener("click", login);
+    logoutBtn.addEventListener("click", logout);
+  } catch (err) {
+    console.error("Error actualizando UI:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initializeAuth0);
