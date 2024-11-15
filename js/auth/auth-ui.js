@@ -30,8 +30,8 @@ async function updateUI() {
   const loginBtn = document.getElementById("login");
   const logoutBtn = document.getElementById("logout");
 
-  loginBtn.style.visibility = isAuthenticated ? "hidden" : "visible";
-  logoutBtn.style.visibility = isAuthenticated ? "visible" : "hidden";
+  loginBtn.style.display = isAuthenticated ? "none" : "block";
+  logoutBtn.style.display = isAuthenticated ? "block" : "none";
 
   if (isAuthenticated) {
     const user = await auth0Client.getUser();

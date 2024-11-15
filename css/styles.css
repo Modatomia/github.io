@@ -102,11 +102,21 @@ h6 {
 }
 
 .auth-buttons button {
-  display: block !important; /* Sobrescribe el display:none inline */
+  display: block !important;
+  visibility: visible !important;
 }
 
 :root {
   /* ... otras variables ... */
-  --teal-dark: #118C75;
-  --font-primary: 'Quicksand', sans-serif;
+  --teal-dark: #118c75;
+  --font-primary: "Quicksand", sans-serif;
+}
+#login,
+#logout {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:root {
+  --teal-dark: #118c75;
 }
