@@ -10,7 +10,7 @@ import {
 let auth0Client = null;
 
 async function initializeAuth0() {
-  auth0Client = await configureClient();
+  await configureClient();
 
   if (window.location.search.includes("code=")) {
     try {
