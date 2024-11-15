@@ -1,50 +1,69 @@
 import config from "./auth0-config.js";
-import {
-  configureClient,
-  login,
-  logout,
-  isAuthenticated,
-  getUser,
-} from "./auth0-client.js";
+import { createAuth0Client } from "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
 
-let auth0Client = null;
+let auth0 = null;
 
 async function initializeAuth0() {
-  await configureClient();
+  auth0 = await createAuth0Client({
+    domain: config.domain,
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+  });
 
+  // Manejo de callback después del login
   if (window.location.search.includes("code=")) {
     try {
-      await auth0Client.handleRedirectCallback();
+      await auth0.handleRedirectCallback();
       window.history.replaceState({}, document.title, window.location.pathname);
-      updateUI();
     } catch (error) {
       console.error("Error handling redirect:", error);
     }
   }
-
   updateUI();
 }
 
 async function updateUI() {
-  const authenticated = await isAuthenticated();
-  const loginBtn = document.getElementById("login");
-  const logoutBtn = document.getElementById("logout");
+  try {
+    const isAuthenticated = await auth0.isAuthenticated();
+    const loginBtn = document.getElementById("login");
+    const logoutBtn = document.getElementById("logout");
 
-  loginBtn.style.display = authenticated ? "none" : "block";
-  logoutBtn.style.display = authenticated ? "block" : "none";
+    loginBtn.style.display = isAuthenticated ? "none" : "block";
+    logoutBtn.style.display = isAuthenticated ? "block" : "none";
 
-  if (authenticated) {
-    const user = await getUser();
-    console.log("Usuario autenticado:", user);
+    if (isAuthenticated) {
+      const user = await auth0.getUser();
+      console.log("Usuario autenticado:", user);
+    }
+  } catch (err) {
+    console.log("Error al actualizar UI:", err);
   }
 }
 
+// Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
   initializeAuth0();
 
   const loginBtn = document.getElementById("login");
   const logoutBtn = document.getElementById("logout");
 
-  loginBtn.addEventListener("click", login);
-  logoutBtn.addEventListener("click", logout);
+  loginBtn.addEventListener("click", async () => {
+    console.log("Click en login");
+    try {
+      await auth0.loginWithRedirect();
+    } catch (err) {
+      console.log("Error en login:", err);
+    }
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    console.log("Click en logout");
+    try {
+      auth0.logout({
+        returnTo: config.returnTo,
+      });
+    } catch (err) {
+      console.log("Error en logout:", err);
+    }
+  });
 });
