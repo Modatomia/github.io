@@ -12,42 +12,84 @@
       rel="stylesheet"
     />
 
-    <!-- Auth0 -->
+    <!-- Auth0 SDK -->
     <script
       src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"
-      crossorigin="anonymous"
+      async
+      defer
     ></script>
   </head>
   <body>
-    <!-- ... resto del contenido ... -->
+    <header class="main-header">
+      <div class="container">
+        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+        <h1>Recursos Educativos</h1>
+        <div class="auth-buttons">
+          <button id="login" onclick="loginWithAuth0()">Iniciar Sesión</button>
+          <button id="logout" onclick="logoutFromAuth0()">Cerrar Sesión</button>
+        </div>
+      </div>
+    </header>
 
-    <!-- Scripts de autenticación al final del body -->
+    <main class="container">
+      <section class="welcome-section">
+        <h2>Bienvenido a Modatomía</h2>
+        <p>
+          Portal de recursos educativos para estudiantes del curso de patronaje
+          digital con Optitex.
+        </p>
+      </section>
+    </main>
+
+    <footer class="main-footer">
+      <div class="container">
+        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
     <script>
-      let auth0 = null;
-      const configureClient = async () => {
-        auth0 = await createAuth0Client({
-          domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-          client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-          redirect_uri: "https://recursos.modatomia.com/callback",
-        });
-      };
+      let auth0Client = null;
 
-      const login = async () => {
-        await auth0.loginWithRedirect();
-      };
+      async function initializeAuth0() {
+        try {
+          auth0Client = await createAuth0Client({
+            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+            redirect_uri: window.location.origin,
+          });
+          console.log("Auth0 inicializado correctamente");
+        } catch (err) {
+          console.error("Error inicializando Auth0:", err);
+        }
+      }
 
-      const logout = () => {
-        auth0.logout({
-          returnTo: "https://recursos.modatomia.com",
-        });
-      };
+      async function loginWithAuth0() {
+        try {
+          console.log("Iniciando login...");
+          if (!auth0Client) {
+            await initializeAuth0();
+          }
+          await auth0Client.loginWithRedirect();
+        } catch (err) {
+          console.error("Error en login:", err);
+        }
+      }
 
-      window.onload = async () => {
-        await configureClient();
-        // Event listeners
-        document.getElementById("login").addEventListener("click", login);
-        document.getElementById("logout").addEventListener("click", logout);
-      };
+      async function logoutFromAuth0() {
+        try {
+          if (!auth0Client) {
+            await initializeAuth0();
+          }
+          auth0Client.logout({
+            returnTo: window.location.origin,
+          });
+        } catch (err) {
+          console.error("Error en logout:", err);
+        }
+      }
+
+      // Inicializar Auth0 cuando se cargue la página
+      window.addEventListener("load", initializeAuth0);
     </script>
   </body>
 </html>
