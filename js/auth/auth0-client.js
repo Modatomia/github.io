@@ -1,33 +1,50 @@
 import config from "./auth0-config.js";
+import {
+  configureClient,
+  login,
+  logout,
+  isAuthenticated,
+  getUser,
+} from "./auth0-client.js";
 
-export let auth0Client = null;
+let auth0Client = null;
 
-export const configureClient = async () => {
-  auth0Client = await createAuth0Client({
-    domain: config.domain,
-    client_id: config.clientId,
-    redirect_uri: config.redirectUri,
-  });
-};
+async function initializeAuth0() {
+  auth0Client = await configureClient();
 
-export const login = async () => {
-  try {
-    await auth0Client.loginWithRedirect();
-  } catch (err) {
-    console.log("Error en login:", err);
+  if (window.location.search.includes("code=")) {
+    try {
+      await auth0Client.handleRedirectCallback();
+      window.history.replaceState({}, document.title, window.location.pathname);
+      updateUI();
+    } catch (error) {
+      console.error("Error handling redirect:", error);
+    }
   }
-};
 
-export const logout = () => {
-  auth0Client.logout({
-    returnTo: config.returnTo,
-  });
-};
+  updateUI();
+}
 
-export const isAuthenticated = async () => {
-  return await auth0Client.isAuthenticated();
-};
+async function updateUI() {
+  const authenticated = await isAuthenticated();
+  const loginBtn = document.getElementById("login");
+  const logoutBtn = document.getElementById("logout");
 
-export const getUser = async () => {
-  return await auth0Client.getUser();
-};
+  loginBtn.style.display = authenticated ? "none" : "block";
+  logoutBtn.style.display = authenticated ? "block" : "none";
+
+  if (authenticated) {
+    const user = await getUser();
+    console.log("Usuario autenticado:", user);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeAuth0();
+
+  const loginBtn = document.getElementById("login");
+  const logoutBtn = document.getElementById("logout");
+
+  loginBtn.addEventListener("click", login);
+  logoutBtn.addEventListener("click", logout);
+});
