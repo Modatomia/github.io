@@ -1,6 +1,6 @@
-import { Auth0Client } from '@auth0/auth0-spa-js';
-import { Auth0Client } from './node_modules/@auth0/auth0-spa-js';
-
+import { Auth0Client } from "@auth0/auth0-spa-js";
+// Elimina la segunda importación duplicada
+// import { Auth0Client } from './node_modules/@auth0/auth0-spa-js';
 
 import config from "./auth0-config.js";
 
