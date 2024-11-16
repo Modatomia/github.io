@@ -26,7 +26,7 @@
         <h1>Recursos Educativos</h1>
         <div class="auth-buttons">
           <button id="login">Iniciar Sesión</button>
-          <button id="logout">Cerrar Sesión</button>
+          <button id="logout" style="display: none">Cerrar Sesión</button>
         </div>
       </div>
     </header>
@@ -50,12 +50,12 @@
     <script>
       window.onload = async () => {
         try {
-          // Esperamos a que Auth0 esté disponible
+          // Esperar a que Auth0 esté listo
           while (!window.createAuth0Client) {
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
 
-          // Creamos el cliente Auth0
+          // Crear el cliente de Auth0
           const auth0 = await createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
@@ -64,52 +64,46 @@
             cacheLocation: "localstorage",
           });
 
-          console.log("Auth0 Client initialized:", auth0);
+          console.log("Auth0 Client inicializado");
 
-          // Configuramos los botones
+          // Obtener referencias a los botones
           const loginButton = document.getElementById("login");
           const logoutButton = document.getElementById("logout");
 
-          if (!loginButton || !logoutButton) {
-            console.error("¡Botones no encontrados! Revisa los IDs en tu HTML.");
-            return;
-          }
-
-          loginButton.addEventListener("click", async () => {
-            console.log("Login button clicked");
-            try {
-              await auth0.loginWithRedirect();
-            } catch (err) {
-              console.error("Error during login:", err);
-            }
-          });
-
-          logoutButton.addEventListener("click", async () => {
-            console.log("Logout button clicked");
-            try {
-              await auth0.logout({
-                returnTo: window.location.origin,
-              });
-            } catch (err) {
-              console.error("Error during logout:", err);
-            }
-          });
-
-          // Verificamos autenticación
+          // Redirigir si hay un código en la URL
           if (window.location.search.includes("code=")) {
-            console.log("Redirect detected:", window.location.search);
+            console.log("Procesando redirección de Auth0...");
             await auth0.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
           }
 
+          // Comprobar si el usuario está autenticado
           const isAuthenticated = await auth0.isAuthenticated();
-          console.log("Is authenticated:", isAuthenticated);
 
-          // Mostrar/ocultar botones según autenticación
-          loginButton.style.display = isAuthenticated ? "none" : "block";
-          logoutButton.style.display = isAuthenticated ? "block" : "none";
+          if (isAuthenticated) {
+            console.log("Usuario autenticado");
+            loginButton.style.display = "none";
+            logoutButton.style.display = "block";
+          } else {
+            console.log("Usuario no autenticado");
+            loginButton.style.display = "block";
+            logoutButton.style.display = "none";
+          }
+
+          // Eventos de los botones
+          loginButton.addEventListener("click", async () => {
+            console.log("Intentando iniciar sesión...");
+            await auth0.loginWithRedirect();
+          });
+
+          logoutButton.addEventListener("click", async () => {
+            console.log("Cerrando sesión...");
+            await auth0.logout({
+              returnTo: window.location.origin,
+            });
+          });
         } catch (error) {
-          console.error("Error inicializando Auth0:", error);
+          console.error("Error durante la inicialización de Auth0:", error);
         }
       };
     </script>
