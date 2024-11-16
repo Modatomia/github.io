@@ -41,74 +41,50 @@
     </footer>
 
     <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"
+      defer
+    ></script>
 
     <script>
-      let auth0Client = null;
-
-      const configureClient = async () => {
-        auth0Client = await createAuth0Client({
-          domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-          client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-          redirect_uri: `${window.location.origin}`,
-          cacheLocation: "localstorage",
-        });
-      };
-
-      const updateUI = async () => {
-        const isAuthenticated = await auth0Client.isAuthenticated();
-        document.getElementById("login").style.display = isAuthenticated
-          ? "none"
-          : "block";
-        document.getElementById("logout").style.display = isAuthenticated
-          ? "block"
-          : "none";
-      };
-
-      const login = async () => {
-        console.log("Iniciando login...");
+      window.onload = async function () {
         try {
-          await auth0Client.loginWithRedirect({
-            redirect_uri: window.location.origin,
+          const auth0Client = await createAuth0Client({
+            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+            redirect_uri: `${window.location.origin}/callback`,
           });
-        } catch (err) {
-          console.log("Error en login:", err);
-        }
-      };
 
-      const logout = () => {
-        try {
-          auth0Client.logout({
-            returnTo: window.location.origin,
-          });
-        } catch (err) {
-          console.log("Error en logout:", err);
-        }
-      };
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
 
-      window.onload = async () => {
-        await configureClient();
+          loginButton.onclick = async () => {
+            console.log("Click en login");
+            await auth0Client.loginWithRedirect();
+          };
 
-        // Manejo del callback de autenticación
-        if (window.location.search.includes("code=")) {
-          try {
+          logoutButton.onclick = async () => {
+            console.log("Click en logout");
+            await auth0Client.logout({
+              returnTo: window.location.origin,
+            });
+          };
+
+          if (window.location.search.includes("code=")) {
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
-          } catch (err) {
-            console.log("Error handling redirect:", err);
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
           }
+
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          loginButton.style.display = isAuthenticated ? "none" : "block";
+          logoutButton.style.display = isAuthenticated ? "block" : "none";
+        } catch (error) {
+          console.error("Error:", error);
         }
-
-        await updateUI();
-
-        // Event listeners
-        const loginButton = document.getElementById("login");
-        const logoutButton = document.getElementById("logout");
-
-        loginButton.addEventListener("click", login);
-        logoutButton.addEventListener("click", logout);
-
-        console.log("Auth0 inicializado correctamente");
       };
     </script>
   </body>
