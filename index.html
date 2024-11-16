@@ -11,6 +11,9 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
   </head>
   <body>
     <header class="main-header">
@@ -40,38 +43,37 @@
       </div>
     </footer>
 
-    <!-- Auth0 SDK -->
-    <script
-      src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"
-      defer
-    ></script>
-
     <script>
-      window.onload = async function () {
+      document.addEventListener("DOMContentLoaded", async function () {
         try {
-          const auth0Client = await createAuth0Client({
+          const config = {
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: `${window.location.origin}/callback`,
-          });
-
-          const loginButton = document.getElementById("login");
-          const logoutButton = document.getElementById("logout");
-
-          loginButton.onclick = async () => {
-            console.log("Click en login");
-            await auth0Client.loginWithRedirect();
+            redirect_uri: "https://recursos.modatomia.com/callback",
           };
 
-          logoutButton.onclick = async () => {
-            console.log("Click en logout");
-            await auth0Client.logout({
-              returnTo: window.location.origin,
+          window.auth0Client = await createAuth0Client(config);
+
+          // Manejo de botones
+          document
+            .getElementById("login")
+            .addEventListener("click", function () {
+              console.log("Click en login");
+              window.auth0Client.loginWithRedirect();
             });
-          };
 
+          document
+            .getElementById("logout")
+            .addEventListener("click", function () {
+              console.log("Click en logout");
+              window.auth0Client.logout({
+                returnTo: "https://recursos.modatomia.com",
+              });
+            });
+
+          // Manejo de callback
           if (window.location.search.includes("code=")) {
-            await auth0Client.handleRedirectCallback();
+            await window.auth0Client.handleRedirectCallback();
             window.history.replaceState(
               {},
               document.title,
@@ -79,13 +81,20 @@
             );
           }
 
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          loginButton.style.display = isAuthenticated ? "none" : "block";
-          logoutButton.style.display = isAuthenticated ? "block" : "none";
+          // Actualizar UI basado en estado de autenticación
+          const isAuthenticated = await window.auth0Client.isAuthenticated();
+          document.getElementById("login").style.display = isAuthenticated
+            ? "none"
+            : "block";
+          document.getElementById("logout").style.display = isAuthenticated
+            ? "block"
+            : "none";
+
+          console.log("Auth0 inicializado correctamente");
         } catch (error) {
-          console.error("Error:", error);
+          console.error("Error inicializando Auth0:", error);
         }
-      };
+      });
     </script>
   </body>
 </html>
