@@ -1,100 +1,90 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modatomía - Recursos Educativos</title>
     <link rel="stylesheet" href="css/styles.css" />
-
+    
     <!-- Fuentes -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
-  </head>
-  <body>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
     <header class="main-header">
-      <div class="container">
-        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
-        <div class="auth-buttons">
-          <button id="login">Iniciar Sesión</button>
-          <button id="logout">Cerrar Sesión</button>
+        <div class="container">
+            <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+            <h1>Recursos Educativos</h1>
+            <div class="auth-buttons">
+                <button id="login">Iniciar Sesión</button>
+                <button id="logout">Cerrar Sesión</button>
+            </div>
         </div>
-      </div>
     </header>
 
     <main class="container">
-      <section class="welcome-section">
-        <h2>Bienvenido a Modatomía</h2>
-        <p>
-          Portal de recursos educativos para estudiantes del curso de patronaje
-          digital con Optitex.
-        </p>
-      </section>
+        <section class="welcome-section">
+            <h2>Bienvenido a Modatomía</h2>
+            <p>Portal de recursos educativos para estudiantes del curso de patronaje digital con Optitex.</p>
+        </section>
     </main>
 
     <footer class="main-footer">
-      <div class="container">
-        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
-      </div>
+        <div class="container">
+            <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
+        </div>
     </footer>
 
+    <!-- Scripts -->
+    <script src="https://cdn.auth0.com/js/auth0/9.20.1/auth0.min.js"></script>
     <script>
-      document.addEventListener("DOMContentLoaded", async function () {
-        try {
-          const config = {
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: "https://recursos.modatomia.com/callback",
-          };
+        const auth0 = new auth0.WebAuth({
+            domain: 'dev-ao28w8mm01qxvpqa.us.auth0.com',
+            clientID: 'POytIwtV3rWDTkS4apTJCeMzhVqX8v1e',
+            responseType: 'code',
+            redirectUri: 'https://recursos.modatomia.com/callback',
+            scope: 'openid profile email'
+        });
 
-          window.auth0Client = await createAuth0Client(config);
+        // Botones
+        const loginBtn = document.getElementById('login');
+        const logoutBtn = document.getElementById('logout');
 
-          // Manejo de botones
-          document
-            .getElementById("login")
-            .addEventListener("click", function () {
-              console.log("Click en login");
-              window.auth0Client.loginWithRedirect();
+        // Login
+        loginBtn.addEventListener('click', function() {
+            console.log('Iniciando login...');
+            auth0.authorize();
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', function() {
+            console.log('Cerrando sesión...');
+            auth0.logout({
+                returnTo: 'https://recursos.modatomia.com'
             });
+        });
 
-          document
-            .getElementById("logout")
-            .addEventListener("click", function () {
-              console.log("Click en logout");
-              window.auth0Client.logout({
-                returnTo: "https://recursos.modatomia.com",
-              });
+        // Manejar callback
+        if (window.location.hash) {
+            auth0.parseHash(function(err, result) {
+                if (result) {
+                    // Guardar tokens
+                    localStorage.setItem('access_token', result.accessToken);
+                    localStorage.setItem('id_token', result.idToken);
+                    window.location.hash = '';
+                    updateUI();
+                }
             });
-
-          // Manejo de callback
-          if (window.location.search.includes("code=")) {
-            await window.auth0Client.handleRedirectCallback();
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-          }
-
-          // Actualizar UI basado en estado de autenticación
-          const isAuthenticated = await window.auth0Client.isAuthenticated();
-          document.getElementById("login").style.display = isAuthenticated
-            ? "none"
-            : "block";
-          document.getElementById("logout").style.display = isAuthenticated
-            ? "block"
-            : "none";
-
-          console.log("Auth0 inicializado correctamente");
-        } catch (error) {
-          console.error("Error inicializando Auth0:", error);
         }
-      });
+
+        // Actualizar UI
+        function updateUI() {
+            const token = localStorage.getItem('id_token');
+            loginBtn.style.display = token ? 'none' : 'block';
+            logoutBtn.style.display = token ? 'block' : 'none';
+        }
+
+        // Inicializar UI
+        updateUI();
     </script>
-  </body>
+</body>
 </html>
