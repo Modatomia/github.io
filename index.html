@@ -13,82 +13,62 @@
     />
 
     <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="container">
-        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
-        <div class="auth-buttons">
-          <button id="login">Iniciar Sesión</button>
-          <button id="logout">Cerrar Sesión</button>
-        </div>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="welcome-section">
-        <h2>Bienvenido a Modatomía</h2>
-        <p>
-          Portal de recursos educativos para estudiantes del curso de patronaje
-          digital con Optitex.
-        </p>
-      </section>
-    </main>
-
-    <footer class="main-footer">
-      <div class="container">
-        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
-      </div>
-    </footer>
-
+    <!-- Auth0 Configuration -->
     <script>
+      const config = {
+          domain: 'dev-ao28w8mm01qxvpqa.us.auth0.com',
+          client_id: 'POytIwtV3rWDTkS4apTJCeMzhVqX8v1e',
+          redirect_uri: window.location.origin,
+          ui_locales: 'es',
+          defaultLoginOptions: {
+              ui: {
+                  theme: {
+                      primaryColor: '#1E3D59',
+                      backgroundColor: '#F5F5F5'
+                  },
+                  logo: 'https://recursos.modatomia.com/assets/logo.png',
+                  title: 'Bienvenido a Modatomía',
+                  socialButtonStyle: 'big',
+                  displayName: 'Modatomía'
+              }
+          }
+      };
+
       const initAuth0 = async () => {
-        try {
-          const auth0Client = await auth0.createAuth0Client({
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: window.location.origin,
-          });
-
-          // Login button
-          document
-            .getElementById("login")
-            .addEventListener("click", async () => {
-              console.log("Iniciando login...");
-              await auth0Client.loginWithRedirect();
-            });
-
-          // Logout button
-          document
-            .getElementById("logout")
-            .addEventListener("click", async () => {
-              await auth0Client.logout({
-                returnTo: window.location.origin,
+          try {
+              const auth0Client = await auth0.createAuth0Client({
+                  ...config
               });
-            });
 
-          // Check auth state
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          document.getElementById("login").style.display = isAuthenticated
-            ? "none"
-            : "block";
-          document.getElementById("logout").style.display = isAuthenticated
-            ? "block"
-            : "none";
+              // Login button
+              document.getElementById('login').addEventListener('click', async () => {
+                  console.log('Iniciando login...');
+                  await auth0Client.loginWithRedirect();
+              });
 
-          console.log("Auth0 inicializado correctamente");
-        } catch (error) {
-          console.error("Error inicializando Auth0:", error);
-        }
+              // Logout button
+              document.getElementById('logout').addEventListener('click', async () => {
+                  await auth0Client.logout({
+                      returnTo: window.location.origin
+                  });
+              });
+
+              // Check auth state
+              const isAuthenticated = await auth0Client.isAuthenticated();
+              document.getElementById('login').style.display = isAuthenticated ? 'none' : 'block';
+              document.getElementById('logout').style.display = isAuthenticated ? 'block' : 'none';
+
+              console.log('Auth0 inicializado correctamente');
+          } catch (error) {
+              console.error('Error inicializando Auth0:', error);
+          }
       };
 
       // Init when DOM is ready
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initAuth0);
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initAuth0);
       } else {
-        initAuth0();
+          initAuth0();
       }
     </script>
   </body>
