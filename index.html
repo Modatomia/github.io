@@ -49,7 +49,6 @@
     </footer>
 
     <script>
-      // Esperamos a que el script de Auth0 se cargue completamente
       window.onload = async () => {
         try {
           // Esperamos a que Auth0 esté disponible
@@ -63,36 +62,48 @@
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
             useRefreshTokens: true,
-            cacheLocation: "localstorage", // Cambiar a localStorage para evitar problemas con cookies
+            cacheLocation: "localstorage",
           });
 
-          // Configuramos los botones una vez que Auth0 está listo
+          console.log("Auth0 Client initialized:", auth0);
+
+          // Configuramos los botones
           const loginButton = document.getElementById("login");
           const logoutButton = document.getElementById("logout");
 
-          loginButton.addEventListener("click", () => {
-            console.log("Intentando login...");
-            auth0.loginWithRedirect();
+          loginButton.addEventListener("click", async () => {
+            console.log("Login button clicked");
+            try {
+              await auth0.loginWithRedirect();
+            } catch (err) {
+              console.error("Error during login:", err);
+            }
           });
 
-          logoutButton.addEventListener("click", () => {
-            console.log("Intentando logout...");
-            auth0.logout({
-              returnTo: window.location.origin,
-            });
+          logoutButton.addEventListener("click", async () => {
+            console.log("Logout button clicked");
+            try {
+              await auth0.logout({
+                returnTo: window.location.origin,
+              });
+            } catch (err) {
+              console.error("Error during logout:", err);
+            }
           });
 
           // Verificamos autenticación
           if (window.location.search.includes("code=")) {
+            console.log("Redirect detected:", window.location.search);
             await auth0.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
           }
 
           const isAuthenticated = await auth0.isAuthenticated();
+          console.log("Is authenticated:", isAuthenticated);
+
+          // Mostrar/ocultar botones según autenticación
           loginButton.style.display = isAuthenticated ? "none" : "block";
           logoutButton.style.display = isAuthenticated ? "block" : "none";
-
-          console.log("Auth0 inicializado correctamente");
         } catch (error) {
           console.error("Error inicializando Auth0:", error);
         }
