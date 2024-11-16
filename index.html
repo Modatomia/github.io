@@ -46,11 +46,16 @@
     <script>
       const initAuth0 = async () => {
         try {
-          // Notar que aquí usamos auth0.createAuth0Client
           const auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: "https://recursos.modatomia.com/callback",
+            cacheLocation: "localstorage",
+            useRefreshTokens: true,
+            authorizationParams: {
+              response_type: "code",
+              scope: "openid profile email",
+            },
           });
 
           // Login button
@@ -58,7 +63,11 @@
             .getElementById("login")
             .addEventListener("click", async () => {
               console.log("Iniciando login...");
-              await auth0Client.loginWithRedirect();
+              await auth0Client.loginWithRedirect({
+                appState: {
+                  returnTo: "https://recursos.modatomia.com",
+                },
+              });
             });
 
           // Logout button
@@ -67,16 +76,24 @@
             .addEventListener("click", async () => {
               await auth0Client.logout({
                 returnTo: "https://recursos.modatomia.com",
+                clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
               });
             });
 
-          // Manejar callback después del login
-          if (window.location.search.includes("code=")) {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
+          // Handle callback
+          if (
+            window.location.search.includes("code=") ||
+            window.location.search.includes("error=")
+          ) {
+            try {
+              await auth0Client.handleRedirectCallback();
+              window.history.replaceState({}, document.title, "/");
+              console.log("Callback manejado correctamente");
+            } catch (err) {
+              console.error("Error en callback:", err);
+            }
           }
 
-          // Check auth state
           const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
@@ -84,6 +101,11 @@
           document.getElementById("logout").style.display = isAuthenticated
             ? "block"
             : "none";
+
+          if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log("Usuario autenticado:", user);
+          }
 
           console.log("Auth0 inicializado correctamente");
         } catch (error) {
