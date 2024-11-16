@@ -44,11 +44,12 @@
     </footer>
 
     <script>
-      let auth0 = null;
+      let auth0Client = null;
 
       window.onload = async function () {
         try {
-          auth0 = await createAuth0Client({
+          // Aquí está el cambio clave: auth0.createAuth0Client en lugar de createAuth0Client
+          auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
@@ -56,30 +57,34 @@
 
           // Handle login
           document.getElementById("login").onclick = async () => {
-            await auth0.loginWithRedirect();
+            console.log("Iniciando login...");
+            await auth0Client.loginWithRedirect();
           };
 
           // Handle logout
-          document.getElementById("logout").onclick = () => {
-            auth0.logout({
+          document.getElementById("logout").onclick = async () => {
+            console.log("Cerrando sesión...");
+            await auth0Client.logout({
               returnTo: window.location.origin,
             });
           };
 
           // Check if in callback page
           if (window.location.search.includes("code=")) {
-            await auth0.handleRedirectCallback();
+            await auth0Client.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
           }
 
           // Update UI
-          const isAuthenticated = await auth0.isAuthenticated();
+          const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
             : "block";
           document.getElementById("logout").style.display = isAuthenticated
             ? "block"
             : "none";
+
+          console.log("Auth0 inicializado correctamente");
         } catch (error) {
           console.error("Error:", error);
         }
