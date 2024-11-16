@@ -90,6 +90,25 @@
               console.error("Error during logout:", err);
             }
           });
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
+
+          console.log("Login button encontrado:", loginButton);
+          console.log("Logout button encontrado:", logoutButton);
+
+          if (!loginButton || !logoutButton) {
+            console.error("¡Botones no encontrados! Revisa los IDs en tu HTML.");
+            return;
+          }
+
+          loginButton.addEventListener("click", () => {
+            console.log("Botón de login presionado");
+          });
+
+          logoutButton.addEventListener("click", () => {
+            console.log("Botón de logout presionado");
+          });
+        };
 
           // Verificamos autenticación
           if (window.location.search.includes("code=")) {
