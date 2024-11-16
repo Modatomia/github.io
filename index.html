@@ -46,54 +46,63 @@
     <script>
       let auth0Client = null;
 
-      window.onload = async function() {
-          try {
-              // Configuración básica de Auth0
-              auth0Client = await auth0.createAuth0Client({
-                  domain: 'dev-ao28w8mm01qxvpqa.us.auth0.com',
-                  client_id: 'POytIwtV3rWDTkS4apTJCeMzhVqX8v1e',
-                  redirect_uri: 'https://recursos.modatomia.com'
-              });
+      window.onload = async function () {
+        try {
+          // Configuración básica de Auth0
+          auth0Client = await auth0.createAuth0Client({
+            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+            redirect_uri: "https://recursos.modatomia.com/callback",
+            authorizationParams: {
+              prompt: "login",
+              response_type: "code",
+            },
+          });
 
-              // Botón de login simplificado
-              document.getElementById('login').onclick = async () => {
-                  console.log('Iniciando proceso de login...');
-                  try {
-                      await auth0Client.loginWithRedirect();
-                      console.log('Redirigiendo a Auth0...');
-                  } catch (error) {
-                      console.error('Error en login:', error);
-                  }
-              };
-
-              // Resto del código igual...
-          } catch (error) {
-              console.error('Error de inicialización:', error);
-          }
-      };
-
-          // Logout button
-          document.getElementById("logout").onclick = async () => {
-            console.log("Cerrando sesión...");
+          // Botón de login con logging
+          document.getElementById("login").onclick = async () => {
+            console.log("Iniciando proceso de login...");
             try {
-              await auth0Client.logout({
-                returnTo: "https://recursos.modatomia.com",
+              await auth0Client.loginWithRedirect({
+                authorizationParams: {
+                  redirect_uri: "https://recursos.modatomia.com/callback",
+                },
               });
-            } catch (err) {
-              console.error("Error en logout:", err);
+            } catch (error) {
+              console.error("Error en login:", error);
             }
           };
 
-          // Handle callback
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
+          // Botón de logout
+          document.getElementById("logout").onclick = async () => {
+            console.log("Iniciando proceso de logout...");
+            try {
+              await auth0Client.logout({
+                logoutParams: {
+                  returnTo: "https://recursos.modatomia.com",
+                },
+              });
+            } catch (error) {
+              console.error("Error en logout:", error);
+            }
+          };
+
+          // Handle callback después del login
+          if (window.location.search.includes("code=")) {
+            try {
+              await auth0Client.handleRedirectCallback();
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+              );
+              console.log("Callback manejado correctamente");
+            } catch (error) {
+              console.error("Error manejando callback:", error);
+            }
           }
 
-          // Update UI
+          // Update UI basado en estado de autenticación
           const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
@@ -102,9 +111,14 @@
             ? "block"
             : "none";
 
+          if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log("Usuario autenticado:", user);
+          }
+
           console.log("Auth0 inicializado correctamente");
         } catch (error) {
-          console.error("Error:", error);
+          console.error("Error de inicialización:", error);
         }
       };
     </script>
