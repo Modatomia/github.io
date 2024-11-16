@@ -1,20 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modatomía - Recursos Educativos</title>
     <link rel="stylesheet" href="css/styles.css" />
 
     <!-- Fuentes -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- Auth0 SDK -->
-      <!-- Auth0 Configuration -->
-      <script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+            <h1>Recursos Educativos</h1>
+            <div class="auth-buttons">
+                <button id="login">Iniciar Sesión</button>
+                <button id="logout">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="welcome-section">
+            <h2>Bienvenido a Modatomía</h2>
+            <p>Portal de recursos educativos para estudiantes del curso de patronaje digital con Optitex.</p>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Auth0 Configuration -->
+    <script>
         const config = {
             domain: 'dev-ao28w8mm01qxvpqa.us.auth0.com',
             client_id: 'POytIwtV3rWDTkS4apTJCeMzhVqX8v1e',
@@ -36,7 +60,7 @@
 
         const initAuth0 = async () => {
             try {
-                const auth0Client = await auth0.createAuth0Client({
+                const auth0Client = await createAuth0Client({
                     ...config
                 });
 
@@ -70,6 +94,6 @@
         } else {
             initAuth0();
         }
-      </script>
-  </body>
+    </script>
+</body>
 </html>
