@@ -48,31 +48,55 @@
 
       window.onload = async function () {
         try {
-          // Aquí está el cambio clave: auth0.createAuth0Client en lugar de createAuth0Client
           auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: window.location.origin,
+            redirect_uri: "https://recursos.modatomia.com/callback",
+            authorizationParams: {
+              response_type: "code",
+              scope: "openid profile email",
+              audience: "https://recursos.modatomia.com",
+            },
           });
 
           // Handle login
           document.getElementById("login").onclick = async () => {
             console.log("Iniciando login...");
-            await auth0Client.loginWithRedirect();
+            try {
+              await auth0Client.loginWithRedirect({
+                authorizationParams: {
+                  redirect_uri: "https://recursos.modatomia.com/callback",
+                  client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+                },
+              });
+            } catch (err) {
+              console.error("Error en login:", err);
+            }
           };
 
           // Handle logout
           document.getElementById("logout").onclick = async () => {
             console.log("Cerrando sesión...");
-            await auth0Client.logout({
-              returnTo: window.location.origin,
-            });
+            try {
+              await auth0Client.logout({
+                logoutParams: {
+                  returnTo: "https://recursos.modatomia.com",
+                  client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+                },
+              });
+            } catch (err) {
+              console.error("Error en logout:", err);
+            }
           };
 
           // Check if in callback page
           if (window.location.search.includes("code=")) {
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
           }
 
           // Update UI
