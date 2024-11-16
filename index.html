@@ -44,72 +44,48 @@
     </footer>
 
     <script>
-      const config = {
-        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-        redirect_uri: "https://recursos.modatomia.com",
-      };
-
-      let auth0 = null;
-
-      const configureClient = async () => {
-        auth0 = await createAuth0Client({
-          domain: config.domain,
-          clientId: config.clientId,
-          authorizationParams: {
-            redirect_uri: config.redirect_uri,
-          },
-        });
-      };
-
-      const updateUI = async () => {
-        const isAuthenticated = await auth0.isAuthenticated();
-        document.getElementById("login").style.display = isAuthenticated
-          ? "none"
-          : "block";
-        document.getElementById("logout").style.display = isAuthenticated
-          ? "block"
-          : "none";
-      };
-
-      const loginHandler = async () => {
-        await auth0.loginWithRedirect({
-          authorizationParams: {
-            client_id: config.clientId,
-            redirect_uri: config.redirect_uri,
-          },
-        });
-      };
-
-      const logoutHandler = async () => {
-        await auth0.logout({
-          logoutParams: {
-            returnTo: config.redirect_uri,
-          },
-        });
-      };
+      let auth0Client = null;
 
       window.onload = async () => {
-        await configureClient();
-
-        // Handle redirect callback
         try {
+          // Inicializar Auth0
+          auth0Client = await auth0.createAuth0Client({
+            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+            redirect_uri: "https://recursos.modatomia.com",
+          });
+
+          // Manejar el callback de redirección
           if (window.location.search.includes("code=")) {
-            await auth0.handleRedirectCallback();
-            window.history.replaceState({}, "", window.location.pathname);
+            await auth0Client.handleRedirectCallback();
+            window.history.replaceState({}, document.title, "/");
           }
-        } catch (err) {
-          console.error("Error handling redirect:", err);
+
+          // Configurar botones
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
+
+          loginButton.addEventListener("click", async () => {
+            console.log("Iniciando login...");
+            await auth0Client.loginWithRedirect();
+          });
+
+          logoutButton.addEventListener("click", async () => {
+            console.log("Cerrando sesión...");
+            await auth0Client.logout({
+              returnTo: "https://recursos.modatomia.com",
+            });
+          });
+
+          // Actualizar UI basado en estado de autenticación
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          loginButton.style.display = isAuthenticated ? "none" : "block";
+          logoutButton.style.display = isAuthenticated ? "block" : "none";
+
+          console.log("Auth0 inicializado correctamente");
+        } catch (error) {
+          console.error("Error:", error);
         }
-
-        await updateUI();
-
-        document
-          .getElementById("login")
-          .addEventListener("click", loginHandler);
-        document
-          .getElementById("logout")
-          .addEventListener("click", logoutHandler);
       };
     </script>
   </body>
