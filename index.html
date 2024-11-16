@@ -51,19 +51,23 @@
           auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: "https://recursos.modatomia.com", // Cambiado
+            redirect_uri: window.location.origin,
+            cacheLocation: "localstorage",
+            authorizationParams: {
+              redirect_uri: window.location.origin,
+              response_type: "token id_token",
+              scope: "openid profile email",
+              prompt: "login",
+            },
           });
 
           // Login button
           document.getElementById("login").onclick = async () => {
-            console.log("Iniciando login...");
-            try {
-              await auth0Client.loginWithRedirect({
-                appState: { returnTo: "https://recursos.modatomia.com" },
-              });
-            } catch (err) {
-              console.error("Error en login:", err);
-            }
+            await auth0Client.loginWithRedirect({
+              authorizationParams: {
+                prompt: "login",
+              },
+            });
           };
 
           // Logout button
