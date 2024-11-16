@@ -62,6 +62,8 @@
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
+            useRefreshTokens: true,
+            cacheLocation: "localstorage", // Cambiar a localStorage para evitar problemas con cookies
           });
 
           // Configuramos los botones una vez que Auth0 está listo
