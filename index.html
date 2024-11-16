@@ -11,13 +11,6 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Auth0 SDK -->
-    <script
-      src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"
-      async
-      defer
-    ></script>
   </head>
   <body>
     <header class="main-header">
@@ -25,8 +18,8 @@
         <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
         <h1>Recursos Educativos</h1>
         <div class="auth-buttons">
-          <button id="login" onclick="loginWithAuth0()">Iniciar Sesión</button>
-          <button id="logout" onclick="logoutFromAuth0()">Cerrar Sesión</button>
+          <button id="login">Iniciar Sesión</button>
+          <button id="logout">Cerrar Sesión</button>
         </div>
       </div>
     </header>
@@ -47,49 +40,57 @@
       </div>
     </footer>
 
-    <script>
-      let auth0Client = null;
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 
-      async function initializeAuth0() {
+    <!-- Auth0 Configuration -->
+    <script>
+      document.addEventListener("DOMContentLoaded", async function () {
         try {
-          auth0Client = await createAuth0Client({
+          const auth0 = await createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
           });
+
+          // Login button
+          document
+            .getElementById("login")
+            .addEventListener("click", async () => {
+              try {
+                console.log("Iniciando login...");
+                await auth0.loginWithRedirect();
+              } catch (error) {
+                console.error("Error en login:", error);
+              }
+            });
+
+          // Logout button
+          document
+            .getElementById("logout")
+            .addEventListener("click", async () => {
+              try {
+                await auth0.logout({
+                  returnTo: window.location.origin,
+                });
+              } catch (error) {
+                console.error("Error en logout:", error);
+              }
+            });
+
+          // Check authentication state
+          const isAuthenticated = await auth0.isAuthenticated();
+          const loginBtn = document.getElementById("login");
+          const logoutBtn = document.getElementById("logout");
+
+          loginBtn.style.display = isAuthenticated ? "none" : "block";
+          logoutBtn.style.display = isAuthenticated ? "block" : "none";
+
           console.log("Auth0 inicializado correctamente");
-        } catch (err) {
-          console.error("Error inicializando Auth0:", err);
+        } catch (error) {
+          console.error("Error inicializando Auth0:", error);
         }
-      }
-
-      async function loginWithAuth0() {
-        try {
-          console.log("Iniciando login...");
-          if (!auth0Client) {
-            await initializeAuth0();
-          }
-          await auth0Client.loginWithRedirect();
-        } catch (err) {
-          console.error("Error en login:", err);
-        }
-      }
-
-      async function logoutFromAuth0() {
-        try {
-          if (!auth0Client) {
-            await initializeAuth0();
-          }
-          auth0Client.logout({
-            returnTo: window.location.origin,
-          });
-        } catch (err) {
-          console.error("Error en logout:", err);
-        }
-      }
-
-      // Inicializar Auth0 cuando se cargue la página
-      window.addEventListener("load", initializeAuth0);
+      });
     </script>
   </body>
 </html>
