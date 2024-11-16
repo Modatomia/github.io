@@ -16,7 +16,7 @@
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
   </head>
   <body>
-    <!-- ... el resto del HTML igual ... -->
+    <!-- ... resto del HTML ... -->
 
     <script>
       const initAuth0 = async () => {
@@ -28,18 +28,9 @@
               redirect_uri: "https://recursos.modatomia.com/callback",
               response_type: "code",
               scope: "openid profile email",
+              connection: "Username-Password-Authentication", // Especificamos la conexión
             },
           });
-
-          // Manejar el callback después del login
-          if (window.location.search.includes("code=")) {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-          }
 
           // Login button
           document
@@ -49,8 +40,8 @@
               try {
                 await auth0Client.loginWithRedirect({
                   authorizationParams: {
-                    redirect_uri: "https://recursos.modatomia.com/callback",
                     prompt: "login",
+                    connection: "Username-Password-Authentication",
                   },
                 });
               } catch (e) {
@@ -73,6 +64,17 @@
               }
             });
 
+          // Handle callback
+          if (window.location.search.includes("code=")) {
+            try {
+              await auth0Client.handleRedirectCallback();
+              window.history.replaceState({}, document.title, "/");
+              console.log("Callback manejado correctamente");
+            } catch (err) {
+              console.error("Error en callback:", err);
+            }
+          }
+
           const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
@@ -81,18 +83,18 @@
             ? "block"
             : "none";
 
-          if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            console.log("Usuario autenticado:", user);
-          }
-
           console.log("Auth0 inicializado correctamente");
         } catch (error) {
           console.error("Error inicializando Auth0:", error);
         }
       };
 
-      window.onload = initAuth0;
+      // Iniciar cuando el documento esté listo
+      if (document.readyState !== "loading") {
+        initAuth0();
+      } else {
+        document.addEventListener("DOMContentLoaded", initAuth0);
+      }
     </script>
   </body>
 </html>
