@@ -51,52 +51,40 @@
           auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: "https://recursos.modatomia.com/callback",
-            authorizationParams: {
-              response_type: "code",
-              scope: "openid profile email",
-              audience: "https://recursos.modatomia.com",
-            },
+            redirect_uri: "https://recursos.modatomia.com", // Cambiado
           });
 
-          // Handle login
+          // Login button
           document.getElementById("login").onclick = async () => {
             console.log("Iniciando login...");
             try {
               await auth0Client.loginWithRedirect({
-                authorizationParams: {
-                  redirect_uri: "https://recursos.modatomia.com/callback",
-                  client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-                },
+                appState: { returnTo: "https://recursos.modatomia.com" },
               });
             } catch (err) {
               console.error("Error en login:", err);
             }
           };
 
-          // Handle logout
+          // Logout button
           document.getElementById("logout").onclick = async () => {
             console.log("Cerrando sesión...");
             try {
               await auth0Client.logout({
-                logoutParams: {
-                  returnTo: "https://recursos.modatomia.com",
-                  client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-                },
+                returnTo: "https://recursos.modatomia.com",
               });
             } catch (err) {
               console.error("Error en logout:", err);
             }
           };
 
-          // Check if in callback page
-          if (window.location.search.includes("code=")) {
+          // Handle callback
+          if (
+            window.location.search.includes("code=") ||
+            window.location.search.includes("error=")
+          ) {
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
+            window.history.replaceState({}, document.title, "/");
           }
 
           // Update UI
