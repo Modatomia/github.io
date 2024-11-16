@@ -56,12 +56,16 @@
           }
 
           // Inicializar Auth0 Client
-          const auth0 = await createAuth0Client({
+          import { Auth0Client } from "@auth0/auth0-spa-js";
+          const auth0 = new Auth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
             useRefreshTokens: true,
             cacheLocation: "localstorage",
+          });
+          auth0.loginWithRedirect().catch((err) => {
+            console.error("Error en login:", err);
           });
 
           console.log("Auth0 Client initialized:", auth0);
