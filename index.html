@@ -16,32 +16,7 @@
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
   </head>
   <body>
-    <header class="main-header">
-      <div class="container">
-        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
-        <div class="auth-buttons">
-          <button id="login">Iniciar Sesión</button>
-          <button id="logout">Cerrar Sesión</button>
-        </div>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="welcome-section">
-        <h2>Bienvenido a Modatomía</h2>
-        <p>
-          Portal de recursos educativos para estudiantes del curso de patronaje
-          digital con Optitex.
-        </p>
-      </section>
-    </main>
-
-    <footer class="main-footer">
-      <div class="container">
-        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
-      </div>
-    </footer>
+    <!-- ... el resto del HTML igual ... -->
 
     <script>
       const initAuth0 = async () => {
@@ -49,50 +24,54 @@
           const auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: "https://recursos.modatomia.com/callback",
-            cacheLocation: "localstorage",
-            useRefreshTokens: true,
             authorizationParams: {
+              redirect_uri: "https://recursos.modatomia.com/callback",
               response_type: "code",
               scope: "openid profile email",
             },
           });
+
+          // Manejar el callback después del login
+          if (window.location.search.includes("code=")) {
+            await auth0Client.handleRedirectCallback();
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+          }
 
           // Login button
           document
             .getElementById("login")
             .addEventListener("click", async () => {
               console.log("Iniciando login...");
-              await auth0Client.loginWithRedirect({
-                appState: {
-                  returnTo: "https://recursos.modatomia.com",
-                },
-              });
+              try {
+                await auth0Client.loginWithRedirect({
+                  authorizationParams: {
+                    redirect_uri: "https://recursos.modatomia.com/callback",
+                    prompt: "login",
+                  },
+                });
+              } catch (e) {
+                console.error("Error en login:", e);
+              }
             });
 
           // Logout button
           document
             .getElementById("logout")
             .addEventListener("click", async () => {
-              await auth0Client.logout({
-                returnTo: "https://recursos.modatomia.com",
-                clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-              });
+              try {
+                await auth0Client.logout({
+                  logoutParams: {
+                    returnTo: "https://recursos.modatomia.com",
+                  },
+                });
+              } catch (e) {
+                console.error("Error en logout:", e);
+              }
             });
-
-          // Handle callback
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            try {
-              await auth0Client.handleRedirectCallback();
-              window.history.replaceState({}, document.title, "/");
-              console.log("Callback manejado correctamente");
-            } catch (err) {
-              console.error("Error en callback:", err);
-            }
-          }
 
           const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
@@ -113,12 +92,7 @@
         }
       };
 
-      // Init when DOM is ready
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initAuth0);
-      } else {
-        initAuth0();
-      }
+      window.onload = initAuth0;
     </script>
   </body>
 </html>
