@@ -46,29 +46,31 @@
     <script>
       let auth0Client = null;
 
-      window.onload = async function () {
-        try {
-          auth0Client = await auth0.createAuth0Client({
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: window.location.origin,
-            cacheLocation: "localstorage",
-            authorizationParams: {
-              redirect_uri: window.location.origin,
-              response_type: "token id_token",
-              scope: "openid profile email",
-              prompt: "login",
-            },
-          });
+      window.onload = async function() {
+          try {
+              // Configuración básica de Auth0
+              auth0Client = await auth0.createAuth0Client({
+                  domain: 'dev-ao28w8mm01qxvpqa.us.auth0.com',
+                  client_id: 'POytIwtV3rWDTkS4apTJCeMzhVqX8v1e',
+                  redirect_uri: 'https://recursos.modatomia.com'
+              });
 
-          // Login button
-          document.getElementById("login").onclick = async () => {
-            await auth0Client.loginWithRedirect({
-              authorizationParams: {
-                prompt: "login",
-              },
-            });
-          };
+              // Botón de login simplificado
+              document.getElementById('login').onclick = async () => {
+                  console.log('Iniciando proceso de login...');
+                  try {
+                      await auth0Client.loginWithRedirect();
+                      console.log('Redirigiendo a Auth0...');
+                  } catch (error) {
+                      console.error('Error en login:', error);
+                  }
+              };
+
+              // Resto del código igual...
+          } catch (error) {
+              console.error('Error de inicialización:', error);
+          }
+      };
 
           // Logout button
           document.getElementById("logout").onclick = async () => {
