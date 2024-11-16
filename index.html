@@ -11,6 +11,9 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
   </head>
   <body>
     <header class="main-header">
@@ -40,14 +43,10 @@
       </div>
     </footer>
 
-    <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
-
-    <!-- Auth0 Configuration -->
     <script>
-      document.addEventListener("DOMContentLoaded", async function () {
+      const initAuth0 = async () => {
         try {
-          const auth0 = await createAuth0Client({
+          const auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             redirect_uri: window.location.origin,
@@ -57,40 +56,40 @@
           document
             .getElementById("login")
             .addEventListener("click", async () => {
-              try {
-                console.log("Iniciando login...");
-                await auth0.loginWithRedirect();
-              } catch (error) {
-                console.error("Error en login:", error);
-              }
+              console.log("Iniciando login...");
+              await auth0Client.loginWithRedirect();
             });
 
           // Logout button
           document
             .getElementById("logout")
             .addEventListener("click", async () => {
-              try {
-                await auth0.logout({
-                  returnTo: window.location.origin,
-                });
-              } catch (error) {
-                console.error("Error en logout:", error);
-              }
+              await auth0Client.logout({
+                returnTo: window.location.origin,
+              });
             });
 
-          // Check authentication state
-          const isAuthenticated = await auth0.isAuthenticated();
-          const loginBtn = document.getElementById("login");
-          const logoutBtn = document.getElementById("logout");
-
-          loginBtn.style.display = isAuthenticated ? "none" : "block";
-          logoutBtn.style.display = isAuthenticated ? "block" : "none";
+          // Check auth state
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          document.getElementById("login").style.display = isAuthenticated
+            ? "none"
+            : "block";
+          document.getElementById("logout").style.display = isAuthenticated
+            ? "block"
+            : "none";
 
           console.log("Auth0 inicializado correctamente");
         } catch (error) {
           console.error("Error inicializando Auth0:", error);
         }
-      });
+      };
+
+      // Init when DOM is ready
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initAuth0);
+      } else {
+        initAuth0();
+      }
     </script>
   </body>
 </html>
