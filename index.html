@@ -46,10 +46,13 @@
     <script>
       const initAuth0 = async () => {
         try {
-          const auth0Client = await auth0.createAuth0Client({
+          const auth0Client = await createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            redirect_uri: window.location.origin,
+            // Cambiamos estas configuraciones
+            authorizationParams: {
+              redirect_uri: "https://recursos.modatomia.com/callback",
+            },
           });
 
           // Login button
@@ -57,7 +60,11 @@
             .getElementById("login")
             .addEventListener("click", async () => {
               console.log("Iniciando login...");
-              await auth0Client.loginWithRedirect();
+              await auth0Client.loginWithRedirect({
+                authorizationParams: {
+                  redirect_uri: "https://recursos.modatomia.com/callback",
+                },
+              });
             });
 
           // Logout button
@@ -65,11 +72,18 @@
             .getElementById("logout")
             .addEventListener("click", async () => {
               await auth0Client.logout({
-                returnTo: window.location.origin,
+                logoutParams: {
+                  returnTo: "https://recursos.modatomia.com",
+                },
               });
             });
 
-          // Check auth state
+          // Handle callback
+          if (window.location.search.includes("code=")) {
+            await auth0Client.handleRedirectCallback();
+            window.history.replaceState({}, document.title, "/");
+          }
+
           const isAuthenticated = await auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
