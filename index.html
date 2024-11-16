@@ -44,85 +44,73 @@
     </footer>
 
     <script>
-      let auth0Client = null;
+      const config = {
+        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+        redirect_uri: "https://recursos.modatomia.com",
+      };
+
+      let auth0 = null;
 
       const configureClient = async () => {
-        try {
-          auth0Client = await auth0.createAuth0Client({
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            authorizationParams: {
-              redirect_uri: "https://recursos.modatomia.com",
-            },
-          });
-          await updateUI();
-        } catch (error) {
-          console.error("Error durante la configuración:", error);
-        }
+        auth0 = await createAuth0Client({
+          domain: config.domain,
+          clientId: config.clientId,
+          authorizationParams: {
+            redirect_uri: config.redirect_uri,
+          },
+        });
       };
 
       const updateUI = async () => {
-        try {
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          document.getElementById("login").style.display = isAuthenticated
-            ? "none"
-            : "block";
-          document.getElementById("logout").style.display = isAuthenticated
-            ? "block"
-            : "none";
-        } catch (error) {
-          console.error("Error actualizando UI:", error);
-        }
+        const isAuthenticated = await auth0.isAuthenticated();
+        document.getElementById("login").style.display = isAuthenticated
+          ? "none"
+          : "block";
+        document.getElementById("logout").style.display = isAuthenticated
+          ? "block"
+          : "none";
       };
 
-      const login = async () => {
-        try {
-          console.log("Iniciando login...");
-          await auth0Client.loginWithRedirect({
-            authorizationParams: {
-              redirect_uri: "https://recursos.modatomia.com",
-            },
-          });
-        } catch (error) {
-          console.error("Error durante login:", error);
-        }
+      const loginHandler = async () => {
+        await auth0.loginWithRedirect({
+          authorizationParams: {
+            client_id: config.clientId,
+            redirect_uri: config.redirect_uri,
+          },
+        });
       };
 
-      const logout = async () => {
-        try {
-          console.log("Iniciando logout...");
-          await auth0Client.logout({
-            logoutParams: {
-              returnTo: "https://recursos.modatomia.com",
-            },
-          });
-        } catch (error) {
-          console.error("Error durante logout:", error);
-        }
+      const logoutHandler = async () => {
+        await auth0.logout({
+          logoutParams: {
+            returnTo: config.redirect_uri,
+          },
+        });
       };
 
-      // Event listeners
-      window.addEventListener("load", async () => {
+      window.onload = async () => {
         await configureClient();
 
-        // Setup the button listeners after Auth0 is configured
-        document.getElementById("login").addEventListener("click", login);
-        document.getElementById("logout").addEventListener("click", logout);
-
         // Handle redirect callback
-        if (
-          window.location.search.includes("code=") ||
-          window.location.search.includes("error=")
-        ) {
-          try {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
-            await updateUI();
-          } catch (error) {
-            console.error("Error handling redirect:", error);
+        try {
+          if (window.location.search.includes("code=")) {
+            await auth0.handleRedirectCallback();
+            window.history.replaceState({}, "", window.location.pathname);
           }
+        } catch (err) {
+          console.error("Error handling redirect:", err);
         }
-      });
+
+        await updateUI();
+
+        document
+          .getElementById("login")
+          .addEventListener("click", loginHandler);
+        document
+          .getElementById("logout")
+          .addEventListener("click", logoutHandler);
+      };
     </script>
   </body>
 </html>
