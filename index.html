@@ -12,8 +12,13 @@
       rel="stylesheet"
     />
 
-    <!-- Auth0 -->
-    <script src="https://cdn.auth0.com/w2/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <!-- Auth0 SDK -->
+    <!-- IMPORTANTE: Cambiamos la URL del SDK -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1.1/auth0-spa-js.production.js"
+      async
+      defer
+    ></script>
   </head>
   <body>
     <header class="main-header">
@@ -44,73 +49,52 @@
     </footer>
 
     <script>
-      // Verificar que el script de Auth0 está cargado
-      function waitForAuth0() {
-        return new Promise((resolve) => {
-          if (window.auth0) {
-            resolve();
-          } else {
-            const check = setInterval(() => {
-              if (window.auth0) {
-                clearInterval(check);
-                resolve();
-              }
-            }, 100);
-          }
-        });
-      }
-
-      // Inicializar Auth0
-      async function initAuth0() {
-        await waitForAuth0();
-
+      // Esperamos a que el script de Auth0 se cargue completamente
+      window.onload = async () => {
         try {
-          const client = await window.auth0.createAuth0Client({
+          // Esperamos a que Auth0 esté disponible
+          while (!window.createAuth0Client) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          // Creamos el cliente Auth0
+          const auth0 = await createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            authorizationParams: {
-              redirect_uri: window.location.origin,
-            },
+            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+            redirect_uri: window.location.origin,
           });
 
-          // Guardar cliente en window para acceso global
-          window.auth0Client = client;
+          // Configuramos los botones una vez que Auth0 está listo
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
 
-          // Configurar botones
-          document.getElementById("login").onclick = () =>
-            client.loginWithRedirect();
-          document.getElementById("logout").onclick = () =>
-            client.logout({
-              logoutParams: {
-                returnTo: window.location.origin,
-              },
+          loginButton.addEventListener("click", () => {
+            console.log("Intentando login...");
+            auth0.loginWithRedirect();
+          });
+
+          logoutButton.addEventListener("click", () => {
+            console.log("Intentando logout...");
+            auth0.logout({
+              returnTo: window.location.origin,
             });
+          });
 
-          // Manejar callback de autenticación
+          // Verificamos autenticación
           if (window.location.search.includes("code=")) {
-            await client.handleRedirectCallback();
+            await auth0.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/");
           }
 
-          // Actualizar UI
-          const isAuthenticated = await client.isAuthenticated();
-          document.getElementById("login").style.display = isAuthenticated
-            ? "none"
-            : "block";
-          document.getElementById("logout").style.display = isAuthenticated
-            ? "block"
-            : "none";
+          const isAuthenticated = await auth0.isAuthenticated();
+          loginButton.style.display = isAuthenticated ? "none" : "block";
+          logoutButton.style.display = isAuthenticated ? "block" : "none";
+
+          console.log("Auth0 inicializado correctamente");
         } catch (error) {
           console.error("Error inicializando Auth0:", error);
         }
-      }
-
-      // Iniciar cuando el DOM esté listo
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initAuth0);
-      } else {
-        initAuth0();
-      }
+      };
     </script>
   </body>
 </html>
