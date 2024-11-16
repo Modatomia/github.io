@@ -13,7 +13,7 @@
     />
 
     <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
   </head>
   <body>
     <header class="main-header">
@@ -49,25 +49,15 @@
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         redirect_uri: window.location.origin,
-        ui_locales: "es",
-        defaultLoginOptions: {
-          ui: {
-            theme: {
-              primaryColor: "#1E3D59",
-              backgroundColor: "#F5F5F5",
-            },
-            logo: "https://recursos.modatomia.com/assets/logo.png",
-            title: "Bienvenido a Modatomía",
-            socialButtonStyle: "big",
-            displayName: "Modatomía",
-          },
-        },
       };
 
       const initAuth0 = async () => {
         try {
-          const auth0Client = await createAuth0Client({
-            ...config,
+          // Usa auth0 directamente del objeto window
+          window.auth0Client = await window.Auth0Client.createClient({
+            domain: config.domain,
+            client_id: config.clientId,
+            redirect_uri: config.redirect_uri,
           });
 
           // Login button
@@ -75,20 +65,20 @@
             .getElementById("login")
             .addEventListener("click", async () => {
               console.log("Iniciando login...");
-              await auth0Client.loginWithRedirect();
+              await window.auth0Client.loginWithRedirect();
             });
 
           // Logout button
           document
             .getElementById("logout")
             .addEventListener("click", async () => {
-              await auth0Client.logout({
+              await window.auth0Client.logout({
                 returnTo: window.location.origin,
               });
             });
 
           // Check auth state
-          const isAuthenticated = await auth0Client.isAuthenticated();
+          const isAuthenticated = await window.auth0Client.isAuthenticated();
           document.getElementById("login").style.display = isAuthenticated
             ? "none"
             : "block";
