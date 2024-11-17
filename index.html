@@ -50,11 +50,11 @@
     </footer>
 
     <script>
-      let auth0Client = null;
-      const domain = "dev-ao28w8mm01qxvpqa.us.auth0.com";
-      const clientId = "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e";
-      const baseURL = window.location.origin;
-      const callbackURL = `${baseURL}/callback.html`;
+      const AUTH_CONFIG = {
+        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+        baseURL: "https://recursos.modatomia.com",
+      };
 
       function log(message, type = "info") {
         const timestamp = new Date().toISOString();
@@ -76,20 +76,21 @@
         try {
           log("Configurando Auth0...");
           const config = {
-            domain: domain,
-            clientId: clientId,
+            domain: AUTH_CONFIG.domain,
+            clientId: AUTH_CONFIG.clientId,
             authorizationParams: {
-              redirect_uri: callbackURL,
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               response_type: "code",
               scope: "openid profile email",
             },
             cacheLocation: "localstorage",
             useRefreshTokens: true,
           };
+
           log("Configuración Auth0:", "debug");
           log(JSON.stringify(config, null, 2), "debug");
 
-          auth0Client = await auth0.createAuth0Client(config);
+          window.auth0Client = await auth0.createAuth0Client(config);
           log("Auth0 configurado exitosamente");
         } catch (error) {
           log(`Error configurando Auth0: ${error.message}`, "error");
@@ -99,7 +100,7 @@
 
       async function updateUI() {
         try {
-          const isAuthenticated = await auth0Client.isAuthenticated();
+          const isAuthenticated = await window.auth0Client.isAuthenticated();
           log(`Estado de autenticación: ${isAuthenticated}`);
 
           document.getElementById("login").style.display = isAuthenticated
@@ -114,7 +115,7 @@
             isAuthenticated ? "block" : "none";
 
           if (isAuthenticated) {
-            const user = await auth0Client.getUser();
+            const user = await window.auth0Client.getUser();
             log(`Usuario autenticado: ${user.email}`);
             document.getElementById("user-content").innerHTML = `
               <h2>Bienvenido ${user.name || user.email}</h2>
@@ -129,10 +130,9 @@
       async function handleLogin() {
         try {
           log("Iniciando proceso de login...");
-          await auth0Client.loginWithRedirect({
+          await window.auth0Client.loginWithRedirect({
             authorizationParams: {
-              redirect_uri: callbackURL,
-              screen_hint: "signup",
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
             },
           });
         } catch (error) {
@@ -143,9 +143,9 @@
       async function handleLogout() {
         try {
           log("Iniciando proceso de logout...");
-          await auth0Client.logout({
+          await window.auth0Client.logout({
             logoutParams: {
-              returnTo: baseURL,
+              returnTo: AUTH_CONFIG.baseURL,
             },
           });
         } catch (error) {
@@ -170,7 +170,7 @@
             window.location.search.includes("error=")
           ) {
             log("Detectado código de autorización, procesando callback...");
-            await auth0Client.handleRedirectCallback();
+            await window.auth0Client.handleRedirectCallback();
             window.history.replaceState(
               {},
               document.title,
