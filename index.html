@@ -71,22 +71,25 @@
       // Variable para el cliente de Auth0
       let auth0Client = null;
 
-      // Función para mostrar mensajes de estado (solo durante desarrollo)
-      function showStatus(message) {
-        const authStatus = document.getElementById("auth-status");
-        if (authStatus) {
-          authStatus.textContent = message;
-          // Limpiar el mensaje después de 3 segundos
-          setTimeout(() => {
-            authStatus.textContent = "";
-          }, 3000);
+      // Función para mostrar mensajes de estado (solo mensajes críticos)
+      function showStatus(message, type = "info") {
+        // Solo mostrar mensajes de error o mensajes específicos
+        if (type === "error" || message.includes("Error")) {
+          const authStatus = document.getElementById("auth-status");
+          if (authStatus) {
+            authStatus.textContent = message;
+            setTimeout(() => {
+              authStatus.textContent = "";
+            }, 3000);
+          }
         }
+        // Mantener logs en consola para debugging
+        console.log(`[${type}] ${message}`);
       }
 
-      // Configuración inicial de Auth0
+      // Modificar configureAuth0()
       async function configureAuth0() {
         try {
-          showStatus("Configurando Auth0...");
           const config = {
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
@@ -100,9 +103,8 @@
           };
 
           auth0Client = await auth0.createAuth0Client(config);
-          showStatus("Auth0 configurado exitosamente");
         } catch (error) {
-          showStatus(`Error: ${error.message}`);
+          showStatus(`Error: ${error.message}`, "error");
           console.error("Error configurando Auth0:", error);
         }
       }
