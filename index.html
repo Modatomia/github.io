@@ -20,6 +20,8 @@
           <button id="login" style="display: none">Iniciar Sesión</button>
           <button id="logout" style="display: none">Cerrar Sesión</button>
         </div>
+        <!-- Añadimos un div para mensajes de estado -->
+        <div id="auth-status" style="margin-top: 10px; color: #666"></div>
       </div>
     </header>
 
@@ -33,7 +35,21 @@
       </section>
 
       <section id="user-content" style="display: none">
-        <!-- Aquí irá el contenido para usuarios autenticados -->
+        <!-- Contenido para usuarios autenticados -->
+      </section>
+
+      <!-- Añadimos una sección para logs de desarrollo -->
+      <section
+        id="debug-logs"
+        style="
+          margin-top: 20px;
+          padding: 10px;
+          background: #f5f5f5;
+          display: none;
+        "
+      >
+        <h3>Logs de Desarrollo</h3>
+        <pre id="debug-output" style="white-space: pre-wrap"></pre>
       </section>
     </main>
 
@@ -45,10 +61,37 @@
 
     <script>
       let auth0Client = null;
-      const baseURL = "https://recursos.modatomia.com";
+      const baseURL = window.location.origin;
+      const debugMode = true; // Activar/desactivar modo debug
+
+      // Función para mostrar logs
+      function log(message, type = "info") {
+        if (debugMode) {
+          const timestamp = new Date().toISOString();
+          const logMessage = `[${timestamp}] [${type}] ${message}`;
+          console.log(logMessage);
+
+          const debugOutput = document.getElementById("debug-output");
+          if (debugOutput) {
+            debugOutput.textContent =
+              logMessage + "\n" + debugOutput.textContent;
+          }
+
+          const authStatus = document.getElementById("auth-status");
+          if (authStatus) {
+            authStatus.textContent = message;
+          }
+        }
+      }
+
+      // Mostrar la sección de debug si está activo
+      if (debugMode) {
+        document.getElementById("debug-logs").style.display = "block";
+      }
 
       const configureAuth0 = async () => {
         try {
+          log("Configurando Auth0...");
           auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
@@ -60,14 +103,19 @@
             cacheLocation: "localstorage",
             useRefreshTokens: true,
           });
+          log("Auth0 configurado exitosamente");
         } catch (error) {
-          console.error("Error configurando Auth0:", error);
+          log(`Error configurando Auth0: ${error.message}`, "error");
+          throw error;
         }
       };
 
       const updateUI = async () => {
         try {
+          log("Actualizando UI...");
           const isAuthenticated = await auth0Client.isAuthenticated();
+          log(`Estado de autenticación: ${isAuthenticated}`);
+
           const loginButton = document.getElementById("login");
           const logoutButton = document.getElementById("logout");
           const welcomeSection = document.getElementById("welcome-section");
@@ -80,65 +128,75 @@
 
           if (isAuthenticated) {
             const user = await auth0Client.getUser();
+            log(`Usuario autenticado: ${user.email}`);
             userContent.innerHTML = `
               <h2>Bienvenido ${user.name || user.email}</h2>
               <p>Accede a tus recursos educativos aquí.</p>
             `;
           }
         } catch (error) {
-          console.error("Error actualizando UI:", error);
+          log(`Error actualizando UI: ${error.message}`, "error");
+          throw error;
         }
       };
 
       const handleLogin = async () => {
         try {
-          console.log("Iniciando login...");
+          log("Iniciando proceso de login...");
           await auth0Client.loginWithRedirect({
             authorizationParams: {
               redirect_uri: `${baseURL}/callback.html`,
             },
           });
         } catch (error) {
-          console.error("Error en login:", error);
+          log(`Error en login: ${error.message}`, "error");
+          throw error;
         }
       };
 
       const handleLogout = async () => {
         try {
-          console.log("Iniciando logout...");
+          log("Iniciando proceso de logout...");
           await auth0Client.logout({
             logoutParams: {
               returnTo: baseURL,
             },
           });
         } catch (error) {
-          console.error("Error en logout:", error);
+          log(`Error en logout: ${error.message}`, "error");
+          throw error;
         }
       };
 
       window.onload = async () => {
-        await configureAuth0();
-
         try {
-          // Configurar botones
+          log("Iniciando aplicación...");
+          await configureAuth0();
+
           const loginButton = document.getElementById("login");
           const logoutButton = document.getElementById("logout");
 
           loginButton.addEventListener("click", handleLogin);
           logoutButton.addEventListener("click", handleLogout);
 
-          // Verificar si estamos regresando de una autenticación
           if (
             window.location.search.includes("code=") ||
             window.location.search.includes("error=")
           ) {
+            log("Detectado código de autorización, procesando callback...");
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+            log("Callback procesado exitosamente");
           }
 
           await updateUI();
+          log("Aplicación iniciada correctamente");
         } catch (error) {
-          console.error("Error en la inicialización:", error);
+          log(`Error en la inicialización: ${error.message}`, "error");
         }
       };
     </script>
