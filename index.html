@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modatomía - Recursos Educativos</title>
     <link rel="stylesheet" href="css/styles.css" />
-
-    <!-- Fuentes -->
     <link
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Auth0 SDK -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
   </head>
   <body>
@@ -21,19 +17,23 @@
         <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
         <h1>Recursos Educativos</h1>
         <div class="auth-buttons">
-          <button id="login">Iniciar Sesión</button>
-          <button id="logout">Cerrar Sesión</button>
+          <button id="login" style="display: none">Iniciar Sesión</button>
+          <button id="logout" style="display: none">Cerrar Sesión</button>
         </div>
       </div>
     </header>
 
     <main class="container">
-      <section class="welcome-section">
+      <section id="welcome-section" class="welcome-section">
         <h2>Bienvenido a Modatomía</h2>
         <p>
           Portal de recursos educativos para estudiantes del curso de patronaje
           digital con Optitex.
         </p>
+      </section>
+
+      <section id="user-content" style="display: none">
+        <!-- Aquí irá el contenido para usuarios autenticados -->
       </section>
     </main>
 
@@ -45,6 +45,7 @@
 
     <script>
       let auth0Client = null;
+      const baseURL = "https://recursos.modatomia.com";
 
       const configureAuth0 = async () => {
         try {
@@ -52,13 +53,40 @@
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
             client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
             authorizationParams: {
-              redirect_uri: "https://recursos.modatomia.com",
+              redirect_uri: `${baseURL}/callback.html`,
               response_type: "code",
               scope: "openid profile email",
             },
+            cacheLocation: "localstorage",
+            useRefreshTokens: true,
           });
         } catch (error) {
           console.error("Error configurando Auth0:", error);
+        }
+      };
+
+      const updateUI = async () => {
+        try {
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
+          const welcomeSection = document.getElementById("welcome-section");
+          const userContent = document.getElementById("user-content");
+
+          loginButton.style.display = isAuthenticated ? "none" : "block";
+          logoutButton.style.display = isAuthenticated ? "block" : "none";
+          welcomeSection.style.display = isAuthenticated ? "none" : "block";
+          userContent.style.display = isAuthenticated ? "block" : "none";
+
+          if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            userContent.innerHTML = `
+              <h2>Bienvenido ${user.name || user.email}</h2>
+              <p>Accede a tus recursos educativos aquí.</p>
+            `;
+          }
+        } catch (error) {
+          console.error("Error actualizando UI:", error);
         }
       };
 
@@ -67,8 +95,7 @@
           console.log("Iniciando login...");
           await auth0Client.loginWithRedirect({
             authorizationParams: {
-              redirect_uri: "https://recursos.modatomia.com",
-              prompt: "login",
+              redirect_uri: `${baseURL}/callback.html`,
             },
           });
         } catch (error) {
@@ -81,7 +108,7 @@
           console.log("Iniciando logout...");
           await auth0Client.logout({
             logoutParams: {
-              returnTo: "https://recursos.modatomia.com",
+              returnTo: baseURL,
             },
           });
         } catch (error) {
@@ -93,7 +120,14 @@
         await configureAuth0();
 
         try {
-          // Manejar el callback de redirección
+          // Configurar botones
+          const loginButton = document.getElementById("login");
+          const logoutButton = document.getElementById("logout");
+
+          loginButton.addEventListener("click", handleLogin);
+          logoutButton.addEventListener("click", handleLogout);
+
+          // Verificar si estamos regresando de una autenticación
           if (
             window.location.search.includes("code=") ||
             window.location.search.includes("error=")
@@ -102,24 +136,7 @@
             window.history.replaceState({}, document.title, "/");
           }
 
-          // Configurar botones
-          const loginButton = document.getElementById("login");
-          const logoutButton = document.getElementById("logout");
-
-          loginButton.addEventListener("click", handleLogin);
-          logoutButton.addEventListener("click", handleLogout);
-
-          // Actualizar UI basado en estado de autenticación
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          loginButton.style.display = isAuthenticated ? "none" : "block";
-          logoutButton.style.display = isAuthenticated ? "block" : "none";
-
-          if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            console.log("Usuario autenticado:", user);
-          }
-
-          console.log("Auth0 inicializado correctamente");
+          await updateUI();
         } catch (error) {
           console.error("Error en la inicialización:", error);
         }
