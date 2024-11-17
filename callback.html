@@ -7,12 +7,12 @@
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
     <style>
       body {
-        font-family: "Poppins", sans-serif;
+        font-family: "Quicksand", sans-serif;
         margin: 0;
         padding: 20px;
         background: #f5f5f5;
       }
-      .status {
+      .container {
         max-width: 600px;
         margin: 40px auto;
         padding: 20px;
@@ -22,22 +22,27 @@
       }
       .debug {
         margin-top: 20px;
-        padding: 10px;
+        padding: 15px;
         background: #f8f9fa;
         border-radius: 4px;
+        font-family: monospace;
       }
-      pre {
-        white-space: pre-wrap;
-        word-wrap: break-word;
+      #message {
+        color: #1e3d59;
+        text-align: center;
+      }
+      #error {
+        color: #ff6e40;
+        text-align: center;
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div class="status">
-      <h2>Procesando autenticación</h2>
-      <p id="status-message">Por favor espere...</p>
-      <div id="debug-output" class="debug">
-        <h3>Debug Information</h3>
+    <div class="container">
+      <h1 id="message">Procesando autenticación...</h1>
+      <p id="error"></p>
+      <div id="debug" class="debug">
         <pre id="debug-log"></pre>
       </div>
     </div>
@@ -52,41 +57,38 @@
         if (debugLog) {
           debugLog.textContent = logMessage + "\n" + debugLog.textContent;
         }
-
-        const statusMessage = document.getElementById("status-message");
-        if (statusMessage) {
-          statusMessage.textContent = message;
-        }
       }
 
       async function handleCallback() {
         try {
           log("Iniciando proceso de callback...");
+          document.getElementById("message").textContent =
+            "Procesando autenticación...";
 
           const auth0Client = await auth0.createAuth0Client({
             domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-            authorizationParams: {
-              redirect_uri: window.location.origin + "/callback.html",
-            },
+            clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
           });
 
-          log("Cliente Auth0 creado, procesando callback...");
+          log("Procesando callback...");
           await auth0Client.handleRedirectCallback();
           log("Callback procesado exitosamente");
 
-          log("Redirigiendo a la página principal...");
           window.location.href = "/";
         } catch (error) {
           log(`Error en callback: ${error.message}`, "error");
-          // Esperar 3 segundos antes de redirigir en caso de error
+          document.getElementById("message").textContent =
+            "Error de autenticación";
+          document.getElementById("error").textContent = error.message;
+          document.getElementById("error").style.display = "block";
+
           setTimeout(() => {
-            window.location.href = "/?error=callback_error";
+            window.location.href =
+              "/?error=" + encodeURIComponent(error.message);
           }, 3000);
         }
       }
 
-      // Iniciar el proceso
       handleCallback();
     </script>
   </body>

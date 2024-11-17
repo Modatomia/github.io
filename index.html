@@ -17,11 +17,12 @@
         <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
         <h1>Recursos Educativos</h1>
         <div class="auth-buttons">
-          <button id="login" style="display: none">Iniciar Sesión</button>
-          <button id="logout" style="display: none">Cerrar Sesión</button>
+          <button id="login" class="auth-button">Iniciar Sesión</button>
+          <button id="logout" class="auth-button" style="display: none">
+            Cerrar Sesión
+          </button>
         </div>
-        <!-- Añadimos un div para mensajes de estado -->
-        <div id="auth-status" style="margin-top: 10px; color: #666"></div>
+        <div id="auth-status" class="auth-status"></div>
       </div>
     </header>
 
@@ -34,22 +35,11 @@
         </p>
       </section>
 
-      <section id="user-content" style="display: none">
-        <!-- Contenido para usuarios autenticados -->
-      </section>
+      <section id="user-content" style="display: none"></section>
 
-      <!-- Añadimos una sección para logs de desarrollo -->
-      <section
-        id="debug-logs"
-        style="
-          margin-top: 20px;
-          padding: 10px;
-          background: #f5f5f5;
-          display: none;
-        "
-      >
+      <section id="debug-logs" class="debug-section">
         <h3>Logs de Desarrollo</h3>
-        <pre id="debug-output" style="white-space: pre-wrap"></pre>
+        <pre id="debug-output"></pre>
       </section>
     </main>
 
@@ -61,100 +51,96 @@
 
     <script>
       let auth0Client = null;
+      const domain = "dev-ao28w8mm01qxvpqa.us.auth0.com";
+      const clientId = "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e";
       const baseURL = window.location.origin;
-      const debugMode = true; // Activar/desactivar modo debug
+      const callbackURL = `${baseURL}/callback.html`;
 
-      // Función para mostrar logs
       function log(message, type = "info") {
-        if (debugMode) {
-          const timestamp = new Date().toISOString();
-          const logMessage = `[${timestamp}] [${type}] ${message}`;
-          console.log(logMessage);
+        const timestamp = new Date().toISOString();
+        const logMessage = `[${timestamp}] [${type}] ${message}`;
+        console.log(logMessage);
 
-          const debugOutput = document.getElementById("debug-output");
-          if (debugOutput) {
-            debugOutput.textContent =
-              logMessage + "\n" + debugOutput.textContent;
-          }
+        const debugOutput = document.getElementById("debug-output");
+        const authStatus = document.getElementById("auth-status");
 
-          const authStatus = document.getElementById("auth-status");
-          if (authStatus) {
-            authStatus.textContent = message;
-          }
+        if (debugOutput) {
+          debugOutput.textContent = logMessage + "\n" + debugOutput.textContent;
+        }
+        if (authStatus) {
+          authStatus.textContent = message;
         }
       }
 
-      // Mostrar la sección de debug si está activo
-      if (debugMode) {
-        document.getElementById("debug-logs").style.display = "block";
-      }
-
-      const configureAuth0 = async () => {
+      async function configureAuth0() {
         try {
           log("Configurando Auth0...");
-          auth0Client = await auth0.createAuth0Client({
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+          const config = {
+            domain: domain,
+            clientId: clientId,
             authorizationParams: {
-              redirect_uri: `${baseURL}/callback.html`,
+              redirect_uri: callbackURL,
               response_type: "code",
               scope: "openid profile email",
             },
             cacheLocation: "localstorage",
             useRefreshTokens: true,
-          });
+          };
+          log("Configuración Auth0:", "debug");
+          log(JSON.stringify(config, null, 2), "debug");
+
+          auth0Client = await auth0.createAuth0Client(config);
           log("Auth0 configurado exitosamente");
         } catch (error) {
           log(`Error configurando Auth0: ${error.message}`, "error");
           throw error;
         }
-      };
+      }
 
-      const updateUI = async () => {
+      async function updateUI() {
         try {
-          log("Actualizando UI...");
           const isAuthenticated = await auth0Client.isAuthenticated();
           log(`Estado de autenticación: ${isAuthenticated}`);
 
-          const loginButton = document.getElementById("login");
-          const logoutButton = document.getElementById("logout");
-          const welcomeSection = document.getElementById("welcome-section");
-          const userContent = document.getElementById("user-content");
-
-          loginButton.style.display = isAuthenticated ? "none" : "block";
-          logoutButton.style.display = isAuthenticated ? "block" : "none";
-          welcomeSection.style.display = isAuthenticated ? "none" : "block";
-          userContent.style.display = isAuthenticated ? "block" : "none";
+          document.getElementById("login").style.display = isAuthenticated
+            ? "none"
+            : "block";
+          document.getElementById("logout").style.display = isAuthenticated
+            ? "block"
+            : "none";
+          document.getElementById("welcome-section").style.display =
+            isAuthenticated ? "none" : "block";
+          document.getElementById("user-content").style.display =
+            isAuthenticated ? "block" : "none";
 
           if (isAuthenticated) {
             const user = await auth0Client.getUser();
             log(`Usuario autenticado: ${user.email}`);
-            userContent.innerHTML = `
+            document.getElementById("user-content").innerHTML = `
               <h2>Bienvenido ${user.name || user.email}</h2>
               <p>Accede a tus recursos educativos aquí.</p>
             `;
           }
         } catch (error) {
           log(`Error actualizando UI: ${error.message}`, "error");
-          throw error;
         }
-      };
+      }
 
-      const handleLogin = async () => {
+      async function handleLogin() {
         try {
           log("Iniciando proceso de login...");
           await auth0Client.loginWithRedirect({
             authorizationParams: {
-              redirect_uri: `${baseURL}/callback.html`,
+              redirect_uri: callbackURL,
+              screen_hint: "signup",
             },
           });
         } catch (error) {
           log(`Error en login: ${error.message}`, "error");
-          throw error;
         }
-      };
+      }
 
-      const handleLogout = async () => {
+      async function handleLogout() {
         try {
           log("Iniciando proceso de logout...");
           await auth0Client.logout({
@@ -164,20 +150,20 @@
           });
         } catch (error) {
           log(`Error en logout: ${error.message}`, "error");
-          throw error;
         }
-      };
+      }
 
       window.onload = async () => {
         try {
           log("Iniciando aplicación...");
           await configureAuth0();
 
-          const loginButton = document.getElementById("login");
-          const logoutButton = document.getElementById("logout");
-
-          loginButton.addEventListener("click", handleLogin);
-          logoutButton.addEventListener("click", handleLogout);
+          document
+            .getElementById("login")
+            .addEventListener("click", handleLogin);
+          document
+            .getElementById("logout")
+            .addEventListener("click", handleLogout);
 
           if (
             window.location.search.includes("code=") ||
@@ -200,5 +186,47 @@
         }
       };
     </script>
+
+    <style>
+      .auth-button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: "Quicksand", sans-serif;
+        font-weight: 600;
+        margin: 0 5px;
+      }
+
+      #login {
+        background-color: #1abc9c;
+        color: white;
+      }
+
+      #logout {
+        background-color: #ff6e40;
+        color: white;
+      }
+
+      .auth-status {
+        margin-top: 10px;
+        font-family: "Poppins", sans-serif;
+        color: #666;
+      }
+
+      .debug-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: monospace;
+      }
+
+      #debug-output {
+        white-space: pre-wrap;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    </style>
   </body>
 </html>
