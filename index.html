@@ -81,17 +81,15 @@
 
       async function configureAuth0() {
         try {
-          console.log("Iniciando configuración Auth0...");
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
             authorizationParams: {
-              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+              redirect_uri: AUTH_CONFIG.baseURL,
               response_type: "code",
               scope: "openid profile email",
             },
           });
-          console.log("Auth0 configurado exitosamente");
         } catch (error) {
           console.error("Error:", error);
           showStatus(error.message, "error");
@@ -122,11 +120,7 @@
       async function handleLogin() {
         try {
           showStatus("Iniciando sesión...");
-          await auth0Client.loginWithRedirect({
-            authorizationParams: {
-              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-            },
-          });
+          await auth0Client.loginWithRedirect();
         } catch (error) {
           showStatus(`Error: ${error.message}`);
           console.error("Error en login:", error);
