@@ -114,24 +114,17 @@
         try {
           const isAuthenticated = await auth0Client.isAuthenticated();
 
-          document.getElementById("login").style.display = isAuthenticated
-            ? "none"
-            : "block";
-          document.getElementById("logout").style.display = isAuthenticated
-            ? "block"
-            : "none";
-          document.getElementById("welcome-section").style.display =
-            isAuthenticated ? "none" : "block";
-          document.getElementById("user-content").style.display =
-            isAuthenticated ? "block" : "none";
-
           if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            document.getElementById("user-content").innerHTML = `
-              <h2>Bienvenido ${user.name || user.email}</h2>
-              <p>Accede a tus recursos educativos aquí.</p>
-            `;
+            // Redirigir al dashboard si está autenticado
+            window.location.href = "/dashboard.html";
+            return;
           }
+
+          // Solo mostrar/ocultar botones si NO está autenticado
+          document.getElementById("login").style.display = "block";
+          document.getElementById("logout").style.display = "none";
+          document.getElementById("welcome-section").style.display = "block";
+          document.getElementById("user-content").style.display = "none";
         } catch (error) {
           showStatus(`Error: ${error.message}`);
           console.error("Error actualizando UI:", error);

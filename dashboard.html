@@ -37,6 +37,29 @@
     </main>
 
     <script>
+      // Añadir al inicio del script
+      async function checkAuth() {
+        try {
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          if (!isAuthenticated) {
+            window.location.href = "/index.html";
+            return;
+          }
+          // Usuario autenticado, cargar contenido
+          const user = await auth0Client.getUser();
+          document.getElementById("user-email").textContent = user.email;
+        } catch (error) {
+          console.error("Error verificando autenticación:", error);
+          window.location.href = "/index.html";
+        }
+      }
+
+      // Modificar la función initAuth0
+      async function initAuth0() {
+        auth0Client = await createAuth0Client(auth0Config);
+        await checkAuth(); // Verificar autenticación inmediatamente
+        await loadContent(); // Cargar contenido solo si está autenticado
+      }
       // Configuración de Auth0
       const auth0Config = {
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
