@@ -11,137 +11,74 @@
     <header class="main-header">
       <div class="container">
         <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
+        <h1>Dashboard</h1>
         <div class="user-info">
           <span id="user-email"></span>
-          <button id="logout" class="btn-logout">Cerrar Sesión</button>
+          <button id="logout" class="auth-button">Cerrar Sesión</button>
         </div>
       </div>
     </header>
 
     <main class="container">
-      <!-- Sección de carga -->
-      <div id="loading" style="display: none">
-        <p>Cargando...</p>
-      </div>
-
-      <!-- Sección de error -->
+      <div id="loading">Cargando...</div>
       <div id="error" style="display: none" class="error-message"></div>
-
-      <!-- Contenido del curso -->
-      <div id="course-content">
-        <div class="modules-grid">
-          <!-- Los módulos se cargarán dinámicamente aquí -->
-        </div>
+      <div id="content" style="display: none">
+        <h2>Contenido del Curso</h2>
+        <div id="modules"></div>
       </div>
     </main>
 
     <script>
-      // Añadir al inicio del script
-      async function checkAuth() {
-        try {
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          if (!isAuthenticated) {
-            window.location.href = "/index.html";
-            return;
-          }
-          // Usuario autenticado, cargar contenido
-          const user = await auth0Client.getUser();
-          document.getElementById("user-email").textContent = user.email;
-        } catch (error) {
-          console.error("Error verificando autenticación:", error);
-          window.location.href = "/index.html";
-        }
-      }
-
-      // Modificar la función initAuth0
-      async function initAuth0() {
-        auth0Client = await createAuth0Client(auth0Config);
-        await checkAuth(); // Verificar autenticación inmediatamente
-        await loadContent(); // Cargar contenido solo si está autenticado
-      }
-      // Configuración de Auth0
-      const auth0Config = {
+      const AUTH_CONFIG = {
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-        client_id: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-        audience: "https://modatomia-recursos.vercel.app/api",
+        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+        baseURL: "https://recursos.modatomia.com",
       };
-
-      // API URL base
-      const API_BASE_URL = "https://modatomia-recursos.vercel.app/api";
 
       let auth0Client = null;
 
-      // Inicializar Auth0
       async function initAuth0() {
-        auth0Client = await createAuth0Client(auth0Config);
-
-        // Verificar autenticación
-        const isAuthenticated = await auth0Client.isAuthenticated();
-        if (!isAuthenticated) {
-          window.location.href = "/";
-          return;
-        }
-
-        // Mostrar información del usuario
-        const user = await auth0Client.getUser();
-        document.getElementById("user-email").textContent = user.email;
-
-        // Cargar contenido
-        await loadContent();
-      }
-
-      // Cargar contenido del curso
-      async function loadContent() {
         try {
-          const token = await auth0Client.getTokenSilently();
-          const response = await fetch(`${API_BASE_URL}/content`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
+          auth0Client = await auth0.createAuth0Client({
+            domain: AUTH_CONFIG.domain,
+            clientId: AUTH_CONFIG.clientId,
+            authorizationParams: {
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
             },
           });
 
-          if (!response.ok) {
-            throw new Error("Error cargando contenido");
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          if (!isAuthenticated) {
+            window.location.href = "/";
+            return;
           }
 
-          const data = await response.json();
-          displayModules(data.modules);
+          const user = await auth0Client.getUser();
+          document.getElementById("user-email").textContent = user.email;
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("content").style.display = "block";
         } catch (error) {
-          showError("Error cargando el contenido del curso");
+          console.error("Error:", error);
+          document.getElementById("error").textContent =
+            "Error de autenticación";
+          document.getElementById("error").style.display = "block";
         }
       }
 
-      // Mostrar módulos
-      function displayModules(modules) {
-        const modulesGrid = document.querySelector(".modules-grid");
-        modulesGrid.innerHTML = modules
-          .map(
-            (module) => `
-                <div class="module-card">
-                    <h3>${module.title}</h3>
-                    <p>${module.description}</p>
-                    <button onclick="loadModule('${module.id}')" class="btn-primary">
-                        Ver Contenido
-                    </button>
-                </div>
-            `
-          )
-          .join("");
+      async function handleLogout() {
+        try {
+          await auth0Client.logout({
+            logoutParams: {
+              returnTo: AUTH_CONFIG.baseURL,
+            },
+          });
+        } catch (error) {
+          console.error("Error en logout:", error);
+        }
       }
 
-      // Manejar cierre de sesión
-      document.getElementById("logout").addEventListener("click", async () => {
-        await auth0Client.logout({
-          returnTo: window.location.origin,
-        });
-      });
-
-      // Inicializar
-      initAuth0().catch((err) => {
-        console.error("Error inicializando:", err);
-        showError("Error inicializando la aplicación");
-      });
+      document.getElementById("logout").addEventListener("click", handleLogout);
+      window.onload = initAuth0;
     </script>
   </body>
 </html>
