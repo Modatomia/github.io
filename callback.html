@@ -59,22 +59,31 @@
         }
       }
 
+      const config = {
+        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+      };
+
       async function handleCallback() {
         try {
           log("Iniciando proceso de callback...");
           document.getElementById("message").textContent =
             "Procesando autenticación...";
 
-          const auth0Client = await auth0.createAuth0Client({
-            domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-            clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-          });
+          const auth0Client = await auth0.createAuth0Client(config);
+          log("Cliente Auth0 creado, procesando callback...");
 
-          log("Procesando callback...");
           await auth0Client.handleRedirectCallback();
           log("Callback procesado exitosamente");
 
-          window.location.href = "/";
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          if (isAuthenticated) {
+            log("Usuario autenticado, redirigiendo a dashboard...");
+            window.location.href = "/dashboard.html";
+          } else {
+            log("Usuario no autenticado, redirigiendo a inicio...");
+            window.location.href = "/";
+          }
         } catch (error) {
           log(`Error en callback: ${error.message}`, "error");
           document.getElementById("message").textContent =
