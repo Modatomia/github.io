@@ -65,11 +65,6 @@
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         baseURL: "https://recursos.modatomia.com",
-        authorizationParams: {
-          redirect_uri: "https://recursos.modatomia.com/callback.html",
-          response_type: "code",
-          scope: "openid profile email",
-        },
       };
 
       // Variable para el cliente de Auth0
@@ -94,6 +89,7 @@
       // Modificar configureAuth0()
       async function configureAuth0() {
         try {
+          console.log("Iniciando configuración Auth0..."); // Debug
           const config = {
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
@@ -102,14 +98,14 @@
               response_type: "code",
               scope: "openid profile email",
             },
-            cacheLocation: "localstorage",
-            useRefreshTokens: true,
           };
 
+          console.log("Configuración:", config); // Debug
           auth0Client = await auth0.createAuth0Client(config);
+          console.log("Auth0 configurado exitosamente"); // Debug
         } catch (error) {
-          showStatus(`Error: ${error.message}`, "error");
           console.error("Error configurando Auth0:", error);
+          showStatus(`Error: ${error.message}`, "error");
         }
       }
 
