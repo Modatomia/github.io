@@ -69,32 +69,28 @@
       let auth0Client = null;
 
       function showStatus(message, type = "info") {
-        if (type === "error" || message.includes("Error")) {
-          const authStatus = document.getElementById("auth-status");
-          if (authStatus) {
-            authStatus.textContent = message;
-            setTimeout(() => {
-              authStatus.textContent = "";
-            }, 3000);
-          }
-        }
         console.log(`[${type}] ${message}`);
+        const authStatus = document.getElementById("auth-status");
+        if (authStatus && (type === "error" || message.includes("Error"))) {
+          authStatus.textContent = message;
+          setTimeout(() => {
+            authStatus.textContent = "";
+          }, 3000);
+        }
       }
 
       async function configureAuth0() {
         try {
           console.log("Iniciando configuración Auth0...");
-          const config = {
+          auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
             authorizationParams: {
-              redirect_uri: AUTH_CONFIG.baseURL,
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               response_type: "code",
               scope: "openid profile email",
             },
-          };
-
-          auth0Client = await auth0.createAuth0Client(config);
+          });
           console.log("Auth0 configurado exitosamente");
         } catch (error) {
           console.error("Error:", error);
@@ -107,6 +103,8 @@
           const isAuthenticated = await auth0Client.isAuthenticated();
 
           if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            console.log("Usuario autenticado:", user);
             window.location.href = "/dashboard.html";
             return;
           }
@@ -124,7 +122,11 @@
       async function handleLogin() {
         try {
           showStatus("Iniciando sesión...");
-          await auth0Client.loginWithRedirect();
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+            },
+          });
         } catch (error) {
           showStatus(`Error: ${error.message}`);
           console.error("Error en login:", error);
