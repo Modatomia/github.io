@@ -61,11 +61,15 @@
     </footer>
 
     <script>
-      // Configuración de Auth0
       const AUTH_CONFIG = {
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         baseURL: "https://recursos.modatomia.com",
+        authorizationParams: {
+          redirect_uri: "https://recursos.modatomia.com/callback.html",
+          response_type: "code",
+          scope: "openid profile email",
+        },
       };
 
       // Variable para el cliente de Auth0
