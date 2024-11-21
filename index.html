@@ -404,15 +404,21 @@
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               connection: "email",
               email: email,
+              response_type: "code",
               scope: "openid profile email",
+              prompt: "login",
+            },
+            openUrl: (url) => {
+              window.location.href = url;
             },
           });
 
-          // El cierre del modal y la alerta se manejarán después de la redirección
           closeModal("magicLinkModal");
         } catch (error) {
           console.error("Error:", error);
-          alert("Error al enviar el enlace. Por favor, intenta nuevamente.");
+          alert(
+            "Error al procesar la solicitud. Por favor, intenta nuevamente."
+          );
         }
       }
 
