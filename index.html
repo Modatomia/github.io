@@ -195,9 +195,15 @@
           showStatus("Iniciando proceso de login...");
           debugLog("Iniciando login con Auth0");
 
+          // Abrir en nueva pestaña
+          const loginWindow = window.open("about:blank", "_blank");
+
           await auth0Client.loginWithRedirect({
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+            },
+            openUrl: (url) => {
+              loginWindow.location.href = url;
             },
           });
         } catch (error) {

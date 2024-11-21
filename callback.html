@@ -55,37 +55,11 @@
         line-height: 1.4;
         color: #666;
       }
-      .loading {
-        text-align: center;
-        margin: 20px 0;
-      }
-      .loading:after {
-        content: "...";
-        animation: dots 1.5s steps(5, end) infinite;
-      }
-      @keyframes dots {
-        0%,
-        20% {
-          content: ".";
-        }
-        40% {
-          content: "..";
-        }
-        60% {
-          content: "...";
-        }
-        80%,
-        100% {
-          content: "";
-        }
-      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1 id="message">
-        Procesando autenticación<span class="loading"></span>
-      </h1>
+      <h1 id="message">Procesando autenticación...</h1>
       <p id="error"></p>
       <div id="debug" class="debug">
         <pre id="debug-log"></pre>
@@ -97,7 +71,6 @@
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         baseURL: "https://recursos.modatomia.com",
-        scope: "openid profile email",
       };
 
       function log(message, type = "info") {
@@ -114,7 +87,6 @@
       async function handleCallback() {
         try {
           log("Iniciando proceso de callback...");
-          log("URL actual: " + window.location.href);
 
           // Limpiar cualquier dato anterior
           localStorage.clear();
@@ -127,19 +99,19 @@
             useRefreshTokens: true,
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              scope: AUTH_CONFIG.scope,
+              scope: "openid profile email",
             },
           });
 
           log("Cliente Auth0 creado");
 
+          // Procesar el callback
           if (
             window.location.search.includes("code=") ||
             window.location.search.includes("error=")
           ) {
-            log("Procesando respuesta de autenticación");
-
             try {
+              log("Procesando respuesta de autenticación");
               await auth0Client.handleRedirectCallback();
               log("Callback procesado exitosamente");
 
@@ -147,40 +119,35 @@
               log("Estado de autenticación: " + isAuthenticated);
 
               if (isAuthenticated) {
-                try {
-                  const token = await auth0Client.getTokenSilently();
-                  log("Token obtenido exitosamente");
-                  localStorage.setItem("auth_token", token);
+                const token = await auth0Client.getTokenSilently();
+                const user = await auth0Client.getUser();
 
-                  const user = await auth0Client.getUser();
-                  log("Usuario obtenido: " + user.email);
-                  localStorage.setItem("user_email", user.email);
+                log("Token obtenido y usuario verificado");
+                localStorage.setItem("auth_token", token);
+                localStorage.setItem("user_email", user.email);
 
-                  // Limpiar URL antes de redireccionar
-                  window.history.replaceState(
-                    {},
-                    document.title,
-                    window.location.pathname
-                  );
+                // Limpiar la URL y redireccionar
+                window.history.replaceState(
+                  {},
+                  document.title,
+                  "/callback.html"
+                );
 
-                  // Redireccionar al dashboard
-                  log("Redireccionando al dashboard...");
+                // Cerrar esta pestaña y actualizar la original
+                if (window.opener) {
+                  window.opener.location.href = "/dashboard.html";
+                  window.close();
+                } else {
                   window.location.replace("/dashboard.html");
-                  return;
-                } catch (tokenError) {
-                  log("Error obteniendo token: " + tokenError.message);
-                  localStorage.clear();
-                  throw tokenError;
                 }
-              } else {
-                throw new Error("La autenticación no fue exitosa");
+                return;
               }
-            } catch (callbackError) {
-              log("Error procesando callback: " + callbackError.message);
-              throw callbackError;
+            } catch (error) {
+              log("Error procesando callback: " + error.message);
+              throw error;
             }
           } else {
-            log("No se encontró código de autorización en la URL");
+            log("No se encontró código de autorización");
             window.location.replace("/");
           }
         } catch (error) {
@@ -190,14 +157,20 @@
           document.getElementById("error").textContent = error.message;
           document.getElementById("error").style.display = "block";
 
-          // Limpiar datos y redireccionar después de un error
+          // Limpiar datos y mostrar error
           localStorage.clear();
           sessionStorage.clear();
 
           setTimeout(() => {
-            window.location.replace(
-              "/?error=" + encodeURIComponent(error.message)
-            );
+            if (window.opener) {
+              window.opener.location.href =
+                "/?error=" + encodeURIComponent(error.message);
+              window.close();
+            } else {
+              window.location.replace(
+                "/?error=" + encodeURIComponent(error.message)
+              );
+            }
           }, 3000);
         }
       }
