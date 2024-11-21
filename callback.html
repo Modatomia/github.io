@@ -84,19 +84,30 @@
         }
       }
 
+      function getStateFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get("state");
+      }
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
       async function handleCallback() {
         try {
           log("Iniciando proceso de callback...");
+          log("URL actual: " + window.location.href);
 
-          // Limpiar cualquier dato anterior
-          localStorage.clear();
-          sessionStorage.clear();
+          // Verificar estado en la URL
+          const state = getStateFromUrl();
+          if (!state) {
+            throw new Error("No se encontró el estado en la URL");
+          }
 
+          // Crear cliente Auth0
           const auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
-            cacheLocation: "localstorage",
-            useRefreshTokens: true,
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               scope: "openid profile email",
@@ -105,50 +116,41 @@
 
           log("Cliente Auth0 creado");
 
-          // Procesar el callback
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            try {
-              log("Procesando respuesta de autenticación");
-              await auth0Client.handleRedirectCallback();
-              log("Callback procesado exitosamente");
+          // Esperar un momento antes de procesar el callback
+          await delay(1000);
 
-              const isAuthenticated = await auth0Client.isAuthenticated();
-              log("Estado de autenticación: " + isAuthenticated);
+          try {
+            log("Procesando callback...");
+            await auth0Client.handleRedirectCallback();
+            log("Callback procesado exitosamente");
 
-              if (isAuthenticated) {
-                const token = await auth0Client.getTokenSilently();
-                const user = await auth0Client.getUser();
+            const isAuthenticated = await auth0Client.isAuthenticated();
+            log("Estado de autenticación: " + isAuthenticated);
 
-                log("Token obtenido y usuario verificado");
-                localStorage.setItem("auth_token", token);
-                localStorage.setItem("user_email", user.email);
+            if (isAuthenticated) {
+              const user = await auth0Client.getUser();
+              log("Usuario autenticado: " + user.email);
 
-                // Limpiar la URL y redireccionar
-                window.history.replaceState(
-                  {},
-                  document.title,
-                  "/callback.html"
-                );
+              // Obtener token
+              const token = await auth0Client.getTokenSilently();
+              log("Token obtenido exitosamente");
 
-                // Cerrar esta pestaña y actualizar la original
-                if (window.opener) {
-                  window.opener.location.href = "/dashboard.html";
-                  window.close();
-                } else {
-                  window.location.replace("/dashboard.html");
-                }
-                return;
-              }
-            } catch (error) {
-              log("Error procesando callback: " + error.message);
-              throw error;
+              // Almacenar datos
+              localStorage.setItem("auth_token", token);
+              localStorage.setItem("user_email", user.email);
+              localStorage.setItem("auth_state", state);
+
+              // Limpiar URL
+              window.history.replaceState({}, document.title, "/callback.html");
+
+              // Redireccionar
+              log("Redirigiendo al dashboard...");
+              window.location.replace("/dashboard.html");
+              return;
             }
-          } else {
-            log("No se encontró código de autorización");
-            window.location.replace("/");
+          } catch (callbackError) {
+            log("Error en callback: " + callbackError.message);
+            throw callbackError;
           }
         } catch (error) {
           log("Error general: " + error.message, "error");
@@ -157,21 +159,15 @@
           document.getElementById("error").textContent = error.message;
           document.getElementById("error").style.display = "block";
 
-          // Limpiar datos y mostrar error
+          // Limpiar datos
           localStorage.clear();
           sessionStorage.clear();
 
-          setTimeout(() => {
-            if (window.opener) {
-              window.opener.location.href =
-                "/?error=" + encodeURIComponent(error.message);
-              window.close();
-            } else {
-              window.location.replace(
-                "/?error=" + encodeURIComponent(error.message)
-              );
-            }
-          }, 3000);
+          // Esperar antes de redireccionar
+          await delay(3000);
+          window.location.replace(
+            "/?error=" + encodeURIComponent(error.message)
+          );
         }
       }
 
