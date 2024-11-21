@@ -399,22 +399,17 @@
         }
 
         try {
-          await auth0Client.passwordlessStart({
-            client_id: AUTH_CONFIG.clientId,
-            connection: "email",
-            send: "link",
-            email: email,
-            authParams: {
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              response_type: "code",
+              connection: "email",
+              email: email,
               scope: "openid profile email",
             },
           });
 
+          // El cierre del modal y la alerta se manejarán después de la redirección
           closeModal("magicLinkModal");
-          alert(
-            "¡Enlace enviado! Por favor, revisa tu correo electrónico y haz clic en el enlace para iniciar sesión."
-          );
         } catch (error) {
           console.error("Error:", error);
           alert("Error al enviar el enlace. Por favor, intenta nuevamente.");
