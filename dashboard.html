@@ -11,198 +11,189 @@
     <link rel="stylesheet" href="css/styles.css" />
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
     <style>
-            .error-message {
-              color: #ff6e40;
-              background-color: #ffebee;
-              border-radius: 4px;
-              padding: 10px;
-              margin: 10px 0;
-              font-family: "Poppins", sans-serif;
-            }
-            .loading {
-              text-align: center;
-              padding: 20px;
-              color: #666;
-              font-family: "Quicksand", sans-serif;
-            }
-            .module {
-              background: white;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 20px 0;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-            .module h3 {
-              color: #1e3d59;
-              margin-top: 0;
-              font-family: "Quicksand", sans-serif;
-            }
-            #user-email {
-              font-family: "Poppins", sans-serif;
-              color: #666;
-            }
-            .auth-button {
-              padding: 8px 16px;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-family: "Quicksand", sans-serif;
-              font-weight: 600;
-              background-color: #ff6e40;
-              color: white;
-              transition: background-color 0.3s ease;
-            }
-            .auth-button:hover {
-              background-color: #ff5722;
-            }
-            #debug-log {
-              font-family: monospace;
-              background: #f8f9fa;
-              padding: 10px;
-              border-radius: 4px;
-              margin-top: 20px;
-              white-space: pre-wrap;
-              word-break: break-word;
-              font-size: 12px;
-              display: none;
-            }
-            const styles = `
-          .module {
-              background: white;
-              border-radius: 12px;
-              padding: 30px;
-              margin: 20px 0;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-          }
+      .error-message {
+        color: #ff6e40;
+        background-color: #ffebee;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        font-family: "Poppins", sans-serif;
+      }
 
-          .module-title {
-              color: #1e3d59;
-              font-size: 24px;
-              margin-bottom: 20px;
-              padding-bottom: 15px;
-              border-bottom: 2px solid #f5f5f5;
-          }
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-family: "Quicksand", sans-serif;
+      }
 
-          .welcome-message {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              margin-bottom: 30px;
-          }
+      .module {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
 
-          .welcome-message p {
-              margin: 0;
-              color: #666;
-              line-height: 1.6;
-          }
+      .module-title {
+        color: #1e3d59;
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f5f5f5;
+      }
 
-          .resources-section, .exercises-section {
-              margin-top: 30px;
-          }
+      #user-email {
+        font-family: "Poppins", sans-serif;
+        color: #666;
+        margin-right: 15px;
+      }
 
-          .resources-section h4, .exercises-section h4 {
-              color: #1e3d59;
-              font-size: 20px;
-              margin-bottom: 20px;
-          }
+      .auth-button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: "Quicksand", sans-serif;
+        font-weight: 600;
+        background-color: #ff6e40;
+        color: white;
+        transition: background-color 0.3s ease;
+      }
 
-          .resources-list {
-              list-style: none;
-              padding: 0;
-              margin: 0;
-          }
+      .auth-button:hover {
+        background-color: #ff5722;
+      }
 
-          .resource-item {
-              display: flex;
-              align-items: start;
-              padding: 15px;
-              border: 1px solid #eee;
-              border-radius: 8px;
-              margin-bottom: 15px;
-              transition: all 0.3s ease;
-          }
+      .welcome-message {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+      }
 
-          .resource-item:hover {
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-              border-color: #1abc9c;
-          }
+      .welcome-message p {
+        margin: 0;
+        color: #666;
+        line-height: 1.6;
+      }
 
-          .resource-icon {
-              font-size: 24px;
-              margin-right: 15px;
-              color: #1abc9c;
-          }
+      .resources-section,
+      .exercises-section {
+        margin-top: 30px;
+      }
 
-          .resource-details h5 {
-              margin: 0 0 5px 0;
-              color: #1e3d59;
-              font-size: 16px;
-          }
+      .resources-section h4,
+      .exercises-section h4 {
+        color: #1e3d59;
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
 
-          .resource-details p {
-              margin: 0 0 10px 0;
-              color: #666;
-              font-size: 14px;
-          }
+      .resources-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
 
-          .resource-link, .exercise-link {
-              display: inline-block;
-              padding: 6px 12px;
-              border-radius: 4px;
-              background-color: #1abc9c;
-              color: white;
-              text-decoration: none;
-              font-size: 14px;
-              transition: background-color 0.3s ease;
-          }
+      .resource-item {
+        display: flex;
+        align-items: start;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+      }
 
-          .resource-link:hover, .exercise-link:hover {
-              background-color: #16a085;
-          }
+      .resource-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-color: #1abc9c;
+      }
 
-          .exercises-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-              gap: 20px;
-          }
+      .resource-icon {
+        font-size: 24px;
+        margin-right: 15px;
+        color: #1abc9c;
+      }
 
-          .exercise-card {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              text-align: center;
-          }
+      .resource-details h5 {
+        margin: 0 0 5px 0;
+        color: #1e3d59;
+        font-size: 16px;
+      }
 
-          .exercise-icon {
-              font-size: 24px;
-              margin-bottom: 10px;
-          }
+      .resource-details p {
+        margin: 0 0 10px 0;
+        color: #666;
+        font-size: 14px;
+      }
 
-          .exercise-card h5 {
-              margin: 0 0 10px 0;
-              color: #1e3d59;
-          }
+      .resource-link,
+      .exercise-link {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 4px;
+        background-color: #1abc9c;
+        color: white;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+      }
 
-          .exercise-card p {
-              margin: 0 0 15px 0;
-              color: #666;
-              font-size: 14px;
-          }
+      .resource-link:hover,
+      .exercise-link:hover {
+        background-color: #16a085;
+      }
 
-          .error-module {
-              text-align: center;
-              padding: 40px;
-          }
+      .exercises-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
 
-          .error-module h3 {
-              color: #ff6e40;
-              margin-bottom: 10px;
-          }
+      .exercise-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+      }
 
-          .error-module p {
-              color: #666;
-          }
-      `;
+      .exercise-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .exercise-card h5 {
+        margin: 0 0 10px 0;
+        color: #1e3d59;
+      }
+
+      .exercise-card p {
+        margin: 0 0 15px 0;
+        color: #666;
+        font-size: 14px;
+      }
+
+      .error-module {
+        text-align: center;
+        padding: 40px;
+      }
+
+      .error-module h3 {
+        color: #ff6e40;
+        margin-bottom: 10px;
+      }
+
+      .error-module p {
+        color: #666;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
     </style>
   </head>
   <body>
@@ -224,7 +215,6 @@
         <h2>Contenido del Curso</h2>
         <div id="modules"></div>
       </div>
-      <pre id="debug-log"></pre>
     </main>
 
     <script>
@@ -237,12 +227,12 @@
       let auth0Client = null;
 
       function debugLog(message) {
-        console.log(message);
-        const log = document.getElementById("debug-log");
-        if (log) {
-          const timestamp = new Date().toISOString();
-          log.textContent = `[${timestamp}] ${message}\n` + log.textContent;
-          log.style.display = "block";
+        // Solo mostrar en consola en desarrollo
+        if (
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+        ) {
+          console.log(message);
         }
       }
 
@@ -265,67 +255,67 @@
         switch (accessLevel) {
           case "curso_basico":
             contentHTML = `
-                  <div class="module">
-                      <h3 class="module-title">Módulo 1: Fundamentos de Optitex</h3>
-                      <div class="module-content">
-                          <div class="welcome-message">
-                              <p>¡Bienvenido/a al curso de Optitex! Aquí encontrarás todo el material complementario organizado por secciones.</p>
-                          </div>
-                          
-                          <div class="resources-section">
-                              <h4>Guías y Recursos</h4>
-                              <ul class="resources-list">
-                                  <li>
-                                      <div class="resource-item">
-                                          <div class="resource-icon">📄</div>
-                                          <div class="resource-details">
-                                              <h5>Introducción a Optitex</h5>
-                                              <p>Guía básica de configuración y primeros pasos</p>
-                                              <a href="#" class="resource-link">Ver documento</a>
-                                          </div>
-                                      </div>
-                                  </li>
-                                  <li>
-                                      <div class="resource-item">
-                                          <div class="resource-icon">📚</div>
-                                          <div class="resource-details">
-                                              <h5>Manual de Referencia</h5>
-                                              <p>Comandos y funciones principales</p>
-                                              <a href="#" class="resource-link">Ver documento</a>
-                                          </div>
-                                      </div>
-                                  </li>
-                              </ul>
-                          </div>
-
-                          <div class="exercises-section">
-                              <h4>Ejercicios Prácticos</h4>
-                              <div class="exercises-grid">
-                                  <div class="exercise-card">
-                                      <div class="exercise-icon">✏️</div>
-                                      <h5>Ejercicio 1</h5>
-                                      <p>Configuración inicial del espacio de trabajo</p>
-                                      <a href="#" class="exercise-link">Ver ejercicio</a>
-                                  </div>
-                                  <div class="exercise-card">
-                                      <div class="exercise-icon">✏️</div>
-                                      <h5>Ejercicio 2</h5>
-                                      <p>Creación de patrones básicos</p>
-                                      <a href="#" class="exercise-link">Ver ejercicio</a>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
+              <div class="module">
+                <h3 class="module-title">Módulo 1: Fundamentos de Optitex</h3>
+                <div class="module-content">
+                  <div class="welcome-message">
+                    <p>¡Bienvenido/a al curso de Optitex! Aquí encontrarás todo el material complementario organizado por secciones.</p>
                   </div>
-              `;
+                  
+                  <div class="resources-section">
+                    <h4>Guías y Recursos</h4>
+                    <ul class="resources-list">
+                      <li>
+                        <div class="resource-item">
+                          <div class="resource-icon">📄</div>
+                          <div class="resource-details">
+                            <h5>Introducción a Optitex</h5>
+                            <p>Guía básica de configuración y primeros pasos</p>
+                            <a href="#" class="resource-link">Ver documento</a>
+                          </div>
+                        </div>
+                      </li>
+                      <li>
+                        <div class="resource-item">
+                          <div class="resource-icon">📚</div>
+                          <div class="resource-details">
+                            <h5>Manual de Referencia</h5>
+                            <p>Comandos y funciones principales</p>
+                            <a href="#" class="resource-link">Ver documento</a>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="exercises-section">
+                    <h4>Ejercicios Prácticos</h4>
+                    <div class="exercises-grid">
+                      <div class="exercise-card">
+                        <div class="exercise-icon">✏️</div>
+                        <h5>Ejercicio 1</h5>
+                        <p>Configuración inicial del espacio de trabajo</p>
+                        <a href="#" class="exercise-link">Ver ejercicio</a>
+                      </div>
+                      <div class="exercise-card">
+                        <div class="exercise-icon">✏️</div>
+                        <h5>Ejercicio 2</h5>
+                        <p>Creación de patrones básicos</p>
+                        <a href="#" class="exercise-link">Ver ejercicio</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
             break;
           default:
             contentHTML = `
-                  <div class="module error-module">
-                      <h3>Contenido no disponible</h3>
-                      <p>No se encontró contenido para tu nivel de acceso.</p>
-                  </div>
-              `;
+              <div class="module error-module">
+                <h3>Contenido no disponible</h3>
+                <p>No se encontró contenido para tu nivel de acceso.</p>
+              </div>
+            `;
         }
 
         modulesContainer.innerHTML = contentHTML;
@@ -350,7 +340,6 @@
 
           debugLog("Auth0 configurado exitosamente");
 
-          // Verificar autenticación
           const isAuthenticated = await auth0Client.isAuthenticated();
           debugLog(`Usuario autenticado: ${isAuthenticated}`);
 
@@ -363,22 +352,17 @@
             }
           }
 
-          // Obtener información del usuario
           const user = await auth0Client.getUser();
           if (!user) {
             throw new Error("No se pudo obtener la información del usuario");
           }
 
-          debugLog(`Usuario: ${user.email}`);
           document.getElementById("user-email").textContent = user.email;
-
-          // Simular nivel de acceso (aquí deberías obtenerlo de tu backend)
           displayUserContent("curso_basico");
         } catch (error) {
           debugLog(`Error en inicialización: ${error.message}`);
           showError("Error de inicialización: " + error.message);
 
-          // Limpiar datos y redireccionar en caso de error
           localStorage.clear();
           sessionStorage.clear();
 
@@ -409,20 +393,8 @@
         }
       }
 
-      // Configurar eventos
       document.getElementById("logout").addEventListener("click", handleLogout);
-
-      // Inicializar
       window.onload = initAuth0;
-
-      // Mostrar debug en desarrollo
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1" ||
-        window.location.hostname.includes("vercel.app")
-      ) {
-        document.getElementById("debug-log").style.display = "block";
-      }
     </script>
   </body>
 </html>

@@ -31,15 +31,6 @@
         background-color: #16a085;
       }
 
-      #logout {
-        background-color: #ff6e40;
-        color: white;
-      }
-
-      #logout:hover {
-        background-color: #ff5722;
-      }
-
       .auth-status {
         margin-top: 10px;
         font-family: "Poppins", sans-serif;
@@ -52,21 +43,6 @@
       .auth-status.error {
         background-color: #ffebee;
         color: #ff6e40;
-      }
-
-      #debug-panel {
-        margin: 20px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 4px;
-        font-family: monospace;
-        display: none;
-      }
-
-      #debug-panel pre {
-        margin: 0;
-        white-space: pre-wrap;
-        word-break: break-word;
       }
     </style>
   </head>
@@ -92,11 +68,6 @@
       </section>
     </main>
 
-    <div id="debug-panel">
-      <h3>Debug Log</h3>
-      <pre id="debug-log"></pre>
-    </div>
-
     <footer class="main-footer">
       <div class="container">
         <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
@@ -113,7 +84,14 @@
       let auth0Client = null;
 
       function showStatus(message, type = "info") {
-        console.log(`[${type}] ${message}`);
+        // Solo mostrar en consola en desarrollo
+        if (
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+        ) {
+          console.log(`[${type}] ${message}`);
+        }
+
         const authStatus = document.getElementById("auth-status");
         if (authStatus) {
           authStatus.textContent = message;
@@ -140,7 +118,12 @@
             },
           });
         } catch (error) {
-          console.error("Error:", error);
+          if (
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+          ) {
+            console.error("Error:", error);
+          }
           showStatus(error.message, "error");
         }
       }
@@ -152,9 +135,7 @@
             await configureAuth0();
           }
 
-          // Usar window.location.origin para asegurar la URL correcta
           const redirectUri = `${AUTH_CONFIG.baseURL}/callback.html`;
-          console.log("Redirect URI:", redirectUri);
 
           await auth0Client.loginWithRedirect({
             authorizationParams: {
@@ -163,7 +144,12 @@
           });
         } catch (error) {
           showStatus(`Error: ${error.message}`, "error");
-          console.error("Error en login:", error);
+          if (
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+          ) {
+            console.error("Error en login:", error);
+          }
         }
       }
 
@@ -171,25 +157,27 @@
         try {
           await configureAuth0();
 
-          // Configurar event listener para el botón de login
           const loginButton = document.getElementById("login");
           if (loginButton) {
             loginButton.addEventListener("click", handleLogin);
           }
 
-          // Verificar si hay error en la URL
           const urlParams = new URLSearchParams(window.location.search);
           const error = urlParams.get("error");
           if (error) {
             showStatus(decodeURIComponent(error), "error");
           }
 
-          // Limpiar cualquier estado anterior
           localStorage.clear();
           sessionStorage.clear();
         } catch (error) {
           showStatus(`Error: ${error.message}`, "error");
-          console.error("Error en la inicialización:", error);
+          if (
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+          ) {
+            console.error("Error en la inicialización:", error);
+          }
         }
       };
     </script>
