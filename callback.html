@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Procesando autenticación - Modatomía</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
     <style>
       body {
@@ -32,6 +36,7 @@
       #message {
         color: #1e3d59;
         text-align: center;
+        font-weight: 600;
       }
       #error {
         color: #ff6e40;
@@ -41,18 +46,46 @@
         padding: 10px;
         background-color: #ffebee;
         border-radius: 4px;
+        font-family: "Poppins", sans-serif;
       }
       #debug-log {
         white-space: pre-wrap;
         word-wrap: break-word;
         font-size: 12px;
         line-height: 1.4;
+        color: #666;
+      }
+      .loading {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .loading:after {
+        content: "...";
+        animation: dots 1.5s steps(5, end) infinite;
+      }
+      @keyframes dots {
+        0%,
+        20% {
+          content: ".";
+        }
+        40% {
+          content: "..";
+        }
+        60% {
+          content: "...";
+        }
+        80%,
+        100% {
+          content: "";
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1 id="message">Procesando autenticación...</h1>
+      <h1 id="message">
+        Procesando autenticación<span class="loading"></span>
+      </h1>
       <p id="error"></p>
       <div id="debug" class="debug">
         <pre id="debug-log"></pre>
@@ -83,6 +116,10 @@
           log("Iniciando proceso de callback...");
           log("URL actual: " + window.location.href);
 
+          // Limpiar cualquier dato anterior
+          localStorage.clear();
+          sessionStorage.clear();
+
           const auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
@@ -96,9 +133,13 @@
 
           log("Cliente Auth0 creado");
 
-          if (window.location.search.includes("code=")) {
+          if (
+            window.location.search.includes("code=") ||
+            window.location.search.includes("error=")
+          ) {
+            log("Procesando respuesta de autenticación");
+
             try {
-              log("Procesando código de autorización");
               await auth0Client.handleRedirectCallback();
               log("Callback procesado exitosamente");
 
@@ -122,23 +163,25 @@
                     window.location.pathname
                   );
 
-                  window.location.href = "/dashboard.html";
+                  // Redireccionar al dashboard
+                  log("Redireccionando al dashboard...");
+                  window.location.replace("/dashboard.html");
                   return;
                 } catch (tokenError) {
                   log("Error obteniendo token: " + tokenError.message);
+                  localStorage.clear();
                   throw tokenError;
                 }
               } else {
-                log("Usuario no autenticado después del callback");
-                throw new Error("Autenticación fallida");
+                throw new Error("La autenticación no fue exitosa");
               }
             } catch (callbackError) {
-              log("Error en callback: " + callbackError.message);
+              log("Error procesando callback: " + callbackError.message);
               throw callbackError;
             }
           } else {
-            log("No se encontró código en la URL");
-            window.location.href = "/";
+            log("No se encontró código de autorización en la URL");
+            window.location.replace("/");
           }
         } catch (error) {
           log("Error general: " + error.message, "error");
@@ -147,10 +190,14 @@
           document.getElementById("error").textContent = error.message;
           document.getElementById("error").style.display = "block";
 
-          // Esperar un momento antes de redireccionar
+          // Limpiar datos y redireccionar después de un error
+          localStorage.clear();
+          sessionStorage.clear();
+
           setTimeout(() => {
-            window.location.href =
-              "/?error=" + encodeURIComponent(error.message);
+            window.location.replace(
+              "/?error=" + encodeURIComponent(error.message)
+            );
           }, 3000);
         }
       }
