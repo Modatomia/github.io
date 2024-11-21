@@ -36,6 +36,12 @@
         text-align: center;
         display: none;
       }
+      #debug-log {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+      }
     </style>
   </head>
   <body>
@@ -68,6 +74,7 @@
       async function handleCallback() {
         try {
           log("Iniciando proceso de callback...");
+          log("URL actual: " + window.location.href);
 
           const auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
@@ -81,29 +88,49 @@
 
           log("Cliente Auth0 creado");
 
-          if (window.location.search.includes("code=")) {
-            log("Procesando código de autorización");
+          if (
+            window.location.search.includes("code=") ||
+            window.location.search.includes("error=")
+          ) {
+            log("Código o error encontrado en URL");
 
-            await auth0Client.handleRedirectCallback();
-            log("Código procesado exitosamente");
+            try {
+              await auth0Client.handleRedirectCallback();
+              log("Callback manejado exitosamente");
 
-            const isAuthenticated = await auth0Client.isAuthenticated();
-            log(`Usuario autenticado: ${isAuthenticated}`);
+              const isAuthenticated = await auth0Client.isAuthenticated();
+              log("Estado de autenticación: " + isAuthenticated);
 
-            if (isAuthenticated) {
-              const user = await auth0Client.getUser();
-              log(`Usuario: ${user.email}`);
+              if (isAuthenticated) {
+                const user = await auth0Client.getUser();
+                log("Usuario autenticado: " + user?.email);
 
-              // Almacenar token en sessionStorage
-              const token = await auth0Client.getTokenSilently();
-              sessionStorage.setItem("auth_token", token);
+                // Guardar token
+                const token = await auth0Client.getTokenSilently();
+                sessionStorage.setItem("auth_token", token);
+                log("Token guardado en sessionStorage");
 
-              window.location.href = "/dashboard.html";
-              return;
+                // Limpiar URL y redirigir
+                window.history.replaceState(
+                  {},
+                  document.title,
+                  AUTH_CONFIG.baseURL
+                );
+                window.location.href = "/dashboard.html";
+                return;
+              } else {
+                log("Usuario no autenticado después del callback");
+              }
+            } catch (callbackError) {
+              log("Error en handleRedirectCallback: " + callbackError.message);
+              throw callbackError;
             }
+          } else {
+            log("No se encontró código de autorización en la URL");
           }
 
-          window.location.href = "/";
+          // Si llegamos aquí, algo salió mal
+          window.location.href = "/?error=authentication_failed";
         } catch (error) {
           log(`Error: ${error.message}`, "error");
           document.getElementById("message").textContent =
@@ -118,7 +145,8 @@
         }
       }
 
-      handleCallback();
+      // Iniciar el proceso de callback cuando la página se carga
+      window.onload = handleCallback;
     </script>
   </body>
 </html>

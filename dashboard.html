@@ -28,6 +28,20 @@
       </div>
     </main>
 
+    <div
+      id="debug-panel"
+      style="
+        display: none;
+        padding: 20px;
+        background: #f5f5f5;
+        margin: 20px;
+        border-radius: 4px;
+      "
+    >
+      <h3>Debug Information</h3>
+      <pre id="debug-log"></pre>
+    </div>
+
     <script>
       const AUTH_CONFIG = {
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
@@ -37,8 +51,19 @@
 
       let auth0Client = null;
 
+      function debugLog(message) {
+        console.log(message);
+        const debugLog = document.getElementById("debug-log");
+        if (debugLog) {
+          debugLog.textContent +=
+            new Date().toISOString() + ": " + message + "\n";
+        }
+      }
+
       async function initAuth0() {
         try {
+          debugLog("Iniciando Auth0...");
+
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
@@ -49,17 +74,27 @@
             },
           });
 
+          debugLog("Cliente Auth0 creado");
+
           const isAuthenticated = await auth0Client.isAuthenticated();
+          debugLog("¿Usuario autenticado? " + isAuthenticated);
+
           if (!isAuthenticated) {
             const storedToken = sessionStorage.getItem("auth_token");
+            debugLog("Token almacenado: " + (storedToken ? "Sí" : "No"));
+
             if (!storedToken) {
+              debugLog("Redirigiendo a página de inicio...");
               window.location.href = "/";
               return;
             }
           }
 
           const user = await auth0Client.getUser();
+          debugLog("Información del usuario obtenida");
+
           if (!user) {
+            debugLog("No se encontró información del usuario");
             window.location.href = "/";
             return;
           }
@@ -68,8 +103,10 @@
           document.getElementById("loading").style.display = "none";
           document.getElementById("content").style.display = "block";
 
+          debugLog("Cargando contenido del usuario...");
           await loadUserContent(user);
         } catch (error) {
+          debugLog("Error: " + error.message);
           console.error("Error:", error);
           document.getElementById("error").textContent =
             "Error de autenticación";
@@ -79,8 +116,10 @@
 
       async function loadUserContent(user) {
         try {
+          debugLog("Obteniendo token...");
           const token = await auth0Client.getTokenSilently();
 
+          debugLog("Verificando acceso...");
           const response = await fetch("/api/auth", {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -92,8 +131,10 @@
           }
 
           const data = await response.json();
+          debugLog("Nivel de acceso: " + data.user.access_level);
           displayUserContent(data.user.access_level);
         } catch (error) {
+          debugLog("Error cargando contenido: " + error.message);
           console.error("Error cargando contenido:", error);
           document.getElementById("error").textContent =
             "Error cargando contenido";
@@ -101,34 +142,47 @@
         }
       }
 
+      function displayUserContent(accessLevel) {
+        const modulesContainer = document.getElementById("modules");
+        debugLog("Mostrando contenido para nivel: " + accessLevel);
+
+        // Ejemplo de contenido según nivel de acceso
+        if (accessLevel === "curso_basico") {
+          modulesContainer.innerHTML = `
+                    <div class="module">
+                        <h3>Módulo 1: Fundamentos</h3>
+                        <div class="module-content">
+                            <p>Contenido del módulo básico</p>
+                        </div>
+                    </div>
+                `;
+        }
+        // Agregar más niveles según sea necesario
+      }
+
       async function handleLogout() {
         try {
+          debugLog("Iniciando cierre de sesión...");
           await auth0Client.logout({
             logoutParams: {
               returnTo: AUTH_CONFIG.baseURL,
             },
           });
         } catch (error) {
+          debugLog("Error en logout: " + error.message);
           console.error("Error en logout:", error);
+          // Forzar logout local en caso de error
+          sessionStorage.clear();
+          window.location.href = AUTH_CONFIG.baseURL;
         }
       }
 
-      // Función para mostrar el contenido según el nivel de acceso
-      function displayUserContent(accessLevel) {
-        const modulesContainer = document.getElementById("modules");
-        // Aquí puedes personalizar cómo se muestra el contenido según el nivel de acceso
-        // Por ejemplo:
-        if (accessLevel === "curso_basico") {
-          modulesContainer.innerHTML = `
-                    <div class="module">
-                        <h3>Módulo 1: Fundamentos</h3>
-                        <div class="module-content">
-                            <!-- Contenido del módulo -->
-                        </div>
-                    </div>
-                `;
-        }
-        // Agregar más niveles según sea necesario
+      // Mostrar panel de debug en desarrollo
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        document.getElementById("debug-panel").style.display = "block";
       }
 
       document.getElementById("logout").addEventListener("click", handleLogout);
