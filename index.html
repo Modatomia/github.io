@@ -92,12 +92,11 @@
           console.log(`[${type}] ${message}`);
         }
 
+        // Solo mostrar mensajes de error en la interfaz
         const authStatus = document.getElementById("auth-status");
-        if (authStatus) {
+        if (authStatus && type === "error") {
           authStatus.textContent = message;
-          if (type === "error") {
-            authStatus.classList.add("error");
-          }
+          authStatus.classList.add("error");
           setTimeout(() => {
             authStatus.textContent = "";
             authStatus.classList.remove("error");
