@@ -84,11 +84,6 @@
         }
       }
 
-      function getStateFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get("state");
-      }
-
       function delay(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
@@ -98,16 +93,12 @@
           log("Iniciando proceso de callback...");
           log("URL actual: " + window.location.href);
 
-          // Verificar estado en la URL
-          const state = getStateFromUrl();
-          if (!state) {
-            throw new Error("No se encontró el estado en la URL");
-          }
-
           // Crear cliente Auth0
           const auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
+            useRefreshTokens: true,
+            cacheLocation: "localstorage",
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               scope: "openid profile email",
@@ -116,41 +107,50 @@
 
           log("Cliente Auth0 creado");
 
-          // Esperar un momento antes de procesar el callback
-          await delay(1000);
+          // Verificar si hay código de autorización
+          if (window.location.search.includes("code=")) {
+            try {
+              log("Procesando callback...");
+              await auth0Client.handleRedirectCallback();
+              log("Callback procesado exitosamente");
 
-          try {
-            log("Procesando callback...");
-            await auth0Client.handleRedirectCallback();
-            log("Callback procesado exitosamente");
+              const isAuthenticated = await auth0Client.isAuthenticated();
+              log("Estado de autenticación: " + isAuthenticated);
 
-            const isAuthenticated = await auth0Client.isAuthenticated();
-            log("Estado de autenticación: " + isAuthenticated);
+              if (isAuthenticated) {
+                const user = await auth0Client.getUser();
+                log("Usuario autenticado: " + user.email);
 
-            if (isAuthenticated) {
-              const user = await auth0Client.getUser();
-              log("Usuario autenticado: " + user.email);
+                // Obtener token
+                const token = await auth0Client.getTokenSilently();
+                log("Token obtenido exitosamente");
 
-              // Obtener token
-              const token = await auth0Client.getTokenSilently();
-              log("Token obtenido exitosamente");
+                // Almacenar datos
+                localStorage.setItem("auth_token", token);
+                localStorage.setItem("user_email", user.email);
 
-              // Almacenar datos
-              localStorage.setItem("auth_token", token);
-              localStorage.setItem("user_email", user.email);
-              localStorage.setItem("auth_state", state);
+                // Esperar un momento antes de redireccionar
+                await delay(1000);
 
-              // Limpiar URL
-              window.history.replaceState({}, document.title, "/callback.html");
-
-              // Redireccionar
-              log("Redirigiendo al dashboard...");
-              window.location.replace("/dashboard.html");
-              return;
+                // Redireccionar
+                log("Redirigiendo al dashboard...");
+                if (window.opener) {
+                  window.opener.location.href = "/dashboard.html";
+                  window.close();
+                } else {
+                  window.location.replace("/dashboard.html");
+                }
+                return;
+              } else {
+                throw new Error("La autenticación no fue exitosa");
+              }
+            } catch (callbackError) {
+              log("Error en callback: " + callbackError.message);
+              throw callbackError;
             }
-          } catch (callbackError) {
-            log("Error en callback: " + callbackError.message);
-            throw callbackError;
+          } else {
+            log("No se encontró código de autorización en la URL");
+            throw new Error("No se encontró código de autorización");
           }
         } catch (error) {
           log("Error general: " + error.message, "error");
@@ -165,9 +165,16 @@
 
           // Esperar antes de redireccionar
           await delay(3000);
-          window.location.replace(
-            "/?error=" + encodeURIComponent(error.message)
-          );
+
+          if (window.opener) {
+            window.opener.location.href =
+              "/?error=" + encodeURIComponent(error.message);
+            window.close();
+          } else {
+            window.location.replace(
+              "/?error=" + encodeURIComponent(error.message)
+            );
+          }
         }
       }
 
