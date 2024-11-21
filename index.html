@@ -11,50 +11,121 @@
     />
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
     <style>
-      .auth-button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
+      .login-options {
+        max-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+      }
+
+      .login-option {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        font-family: var(--font-primary);
+        font-weight: 500;
         cursor: pointer;
-        font-family: "Quicksand", sans-serif;
-        font-weight: 600;
-        margin: 0 5px;
-        transition: background-color 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
       }
 
-      #login {
-        background-color: #1abc9c;
+      .login-option:hover {
+        background-color: var(--gray-50);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .login-option img {
+        width: 24px;
+        height: 24px;
+      }
+
+      .magic-link {
+        background-color: var(--teal);
         color: white;
+        border: none;
       }
 
-      #login:hover {
-        background-color: #16a085;
+      .magic-link:hover {
+        background-color: var(--teal-dark);
       }
 
-      .auth-status {
-        margin-top: 10px;
-        font-family: "Poppins", sans-serif;
-        color: #666;
-        min-height: 20px;
-        padding: 8px;
-        border-radius: 4px;
+      .login-divider {
+        text-align: center;
+        margin: 1rem 0;
+        position: relative;
       }
 
-      .auth-status.error {
-        background-color: #ffebee;
-        color: #ff6e40;
+      .login-divider::before,
+      .login-divider::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 45%;
+        height: 1px;
+        background-color: var(--gray-200);
+      }
+
+      .login-divider::before {
+        left: 0;
+      }
+
+      .login-divider::after {
+        right: 0;
+      }
+
+      .login-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .login-modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 400px;
+      }
+
+      #emailInput {
+        width: 100%;
+        padding: 10px;
+        margin: 1rem 0;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+        font-family: var(--font-secondary);
       }
     </style>
   </head>
   <body>
     <header class="main-header">
       <div class="container">
-        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
+        <div class="logo-title-group">
+          <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+          <h1>Recursos Educativos</h1>
+        </div>
         <div class="auth-buttons">
           <button id="login" class="auth-button">Iniciar Sesión</button>
         </div>
-        <div id="auth-status" class="auth-status"></div>
       </div>
     </header>
 
@@ -66,6 +137,56 @@
           digital con Optitex.
         </p>
       </section>
+
+      <div id="loginModal" class="login-modal">
+        <div class="modal-content">
+          <h3>Iniciar Sesión</h3>
+          <div class="login-options">
+            <button onclick="handleMagicLink()" class="login-option magic-link">
+              ✨ Acceder con Magic Link
+            </button>
+
+            <div class="login-divider">o</div>
+
+            <button onclick="handleSocialLogin('google')" class="login-option">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                alt="Google"
+              />
+              Continuar con Google
+            </button>
+
+            <button
+              onclick="handleSocialLogin('microsoft')"
+              class="login-option"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
+                alt="Microsoft"
+              />
+              Continuar con Microsoft
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="magicLinkModal" class="login-modal">
+        <div class="modal-content">
+          <h3>Ingresa tu email</h3>
+          <p>Te enviaremos un enlace mágico para acceder</p>
+          <input
+            type="email"
+            id="emailInput"
+            placeholder="correo@ejemplo.com"
+          />
+          <button onclick="sendMagicLink()" class="auth-button">
+            Enviar enlace
+          </button>
+          <button onclick="closeModal('magicLinkModal')" class="auth-button">
+            Cancelar
+          </button>
+        </div>
+      </div>
     </main>
 
     <footer class="main-footer">
@@ -83,28 +204,7 @@
 
       let auth0Client = null;
 
-      function showStatus(message, type = "info") {
-        // Solo mostrar en consola en desarrollo
-        if (
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"
-        ) {
-          console.log(`[${type}] ${message}`);
-        }
-
-        // Solo mostrar mensajes de error en la interfaz
-        const authStatus = document.getElementById("auth-status");
-        if (authStatus && type === "error") {
-          authStatus.textContent = message;
-          authStatus.classList.add("error");
-          setTimeout(() => {
-            authStatus.textContent = "";
-            authStatus.classList.remove("error");
-          }, 3000);
-        }
-      }
-
-      async function configureAuth0() {
+      async function initAuth0() {
         try {
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
@@ -117,68 +217,72 @@
             },
           });
         } catch (error) {
-          if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            console.error("Error:", error);
-          }
-          showStatus(error.message, "error");
+          console.error("Error:", error);
         }
       }
 
-      async function handleLogin() {
+      function showModal(modalId) {
+        document.getElementById(modalId).classList.add("active");
+      }
+
+      function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove("active");
+      }
+
+      async function handleMagicLink() {
+        closeModal("loginModal");
+        showModal("magicLinkModal");
+      }
+
+      async function sendMagicLink() {
+        const email = document.getElementById("emailInput").value;
+        if (!email) {
+          alert("Por favor, ingresa tu email");
+          return;
+        }
+
         try {
-          showStatus("Iniciando sesión...");
-          if (!auth0Client) {
-            await configureAuth0();
-          }
+          await auth0Client.loginWithEmailLink({
+            email,
+            authorizationParams: {
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+            },
+          });
 
-          const redirectUri = `${AUTH_CONFIG.baseURL}/callback.html`;
+          closeModal("magicLinkModal");
+          alert("¡Enlace enviado! Por favor, revisa tu correo.");
+        } catch (error) {
+          alert("Error al enviar el enlace. Por favor, intenta nuevamente.");
+        }
+      }
 
+      async function handleSocialLogin(connection) {
+        try {
           await auth0Client.loginWithRedirect({
             authorizationParams: {
-              redirect_uri: redirectUri,
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+              connection,
             },
           });
         } catch (error) {
-          showStatus(`Error: ${error.message}`, "error");
-          if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            console.error("Error en login:", error);
-          }
+          console.error("Error en login:", error);
         }
       }
 
-      window.onload = async () => {
-        try {
-          await configureAuth0();
+      // Event Listeners
+      document
+        .getElementById("login")
+        .addEventListener("click", () => showModal("loginModal"));
 
-          const loginButton = document.getElementById("login");
-          if (loginButton) {
-            loginButton.addEventListener("click", handleLogin);
-          }
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const error = urlParams.get("error");
-          if (error) {
-            showStatus(decodeURIComponent(error), "error");
-          }
-
-          localStorage.clear();
-          sessionStorage.clear();
-        } catch (error) {
-          showStatus(`Error: ${error.message}`, "error");
-          if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            console.error("Error en la inicialización:", error);
-          }
+      // Close modals when clicking outside
+      window.onclick = function (event) {
+        if (event.target.classList.contains("login-modal")) {
+          event.target.classList.remove("active");
         }
       };
+
+      // Initialize Auth0
+      window.onload = initAuth0;
     </script>
   </body>
 </html>
