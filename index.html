@@ -112,120 +112,86 @@
 
       let auth0Client = null;
 
-      function debugLog(message) {
-        console.log(message);
-        const debugLog = document.getElementById("debug-log");
-        if (debugLog) {
-          const timestamp = new Date().toISOString();
-          debugLog.textContent =
-            `[${timestamp}] ${message}\n` + debugLog.textContent;
-        }
-      }
-
       function showStatus(message, type = "info") {
-        debugLog(`${type.toUpperCase()}: ${message}`);
+        console.log(`[${type}] ${message}`);
         const authStatus = document.getElementById("auth-status");
         if (authStatus) {
           authStatus.textContent = message;
-          authStatus.className = `auth-status ${type}`;
-          if (type !== "error") {
-            setTimeout(() => {
-              authStatus.textContent = "";
-              authStatus.className = "auth-status";
-            }, 3000);
+          if (type === "error") {
+            authStatus.classList.add("error");
           }
+          setTimeout(() => {
+            authStatus.textContent = "";
+            authStatus.classList.remove("error");
+          }, 3000);
         }
       }
 
-      async function checkAndRedirect() {
+      async function configureAuth0() {
         try {
-          const isAuthenticated = await auth0Client.isAuthenticated();
-          debugLog(`Usuario autenticado: ${isAuthenticated}`);
-
-          if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            debugLog(`Redirigiendo usuario autenticado: ${user.email}`);
-            window.location.replace("/dashboard.html");
-            return true;
-          }
-          return false;
-        } catch (error) {
-          debugLog(`Error en checkAndRedirect: ${error.message}`);
-          return false;
-        }
-      }
-
-      async function initAuth0() {
-        try {
-          debugLog("Iniciando configuración de Auth0");
-
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
-            cacheLocation: "localstorage",
             useRefreshTokens: true,
+            cacheLocation: "localstorage",
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
               scope: "openid profile email",
             },
           });
-
-          debugLog("Auth0 configurado exitosamente");
-
-          // Manejar el callback si existe
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            debugLog("Detectado código de autorización en la URL");
-            window.location.replace("/callback.html" + window.location.search);
-            return;
-          }
-
-          // Verificar autenticación
-          await checkAndRedirect();
         } catch (error) {
-          debugLog(`Error en initAuth0: ${error.message}`);
-          showStatus(`Error de inicialización: ${error.message}`, "error");
+          console.error("Error:", error);
+          showStatus(error.message, "error");
         }
       }
 
       async function handleLogin() {
         try {
-          showStatus("Iniciando proceso de login...");
-          debugLog("Iniciando login con Auth0");
+          showStatus("Iniciando sesión...");
+          if (!auth0Client) {
+            await configureAuth0();
+          }
 
-          // Abrir en nueva pestaña
-          const loginWindow = window.open("about:blank", "_blank");
+          // Usar window.location.origin para asegurar la URL correcta
+          const redirectUri = `${AUTH_CONFIG.baseURL}/callback.html`;
+          console.log("Redirect URI:", redirectUri);
 
           await auth0Client.loginWithRedirect({
             authorizationParams: {
-              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-            },
-            openUrl: (url) => {
-              loginWindow.location.href = url;
+              redirect_uri: redirectUri,
             },
           });
         } catch (error) {
-          debugLog(`Error en login: ${error.message}`);
-          showStatus(`Error de login: ${error.message}`, "error");
+          showStatus(`Error: ${error.message}`, "error");
+          console.error("Error en login:", error);
         }
       }
 
-      // Eventos y inicialización
-      document.getElementById("login").addEventListener("click", handleLogin);
+      window.onload = async () => {
+        try {
+          await configureAuth0();
 
-      // Mostrar panel de debug en desarrollo
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1" ||
-        window.location.hostname.includes("vercel.app")
-      ) {
-        document.getElementById("debug-panel").style.display = "block";
-      }
+          // Configurar event listener para el botón de login
+          const loginButton = document.getElementById("login");
+          if (loginButton) {
+            loginButton.addEventListener("click", handleLogin);
+          }
 
-      // Inicializar cuando el documento esté listo
-      window.onload = initAuth0;
+          // Verificar si hay error en la URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const error = urlParams.get("error");
+          if (error) {
+            showStatus(decodeURIComponent(error), "error");
+          }
+
+          // Limpiar cualquier estado anterior
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (error) {
+          showStatus(`Error: ${error.message}`, "error");
+          console.error("Error en la inicialización:", error);
+        }
+      };
     </script>
   </body>
 </html>
