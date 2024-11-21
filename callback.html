@@ -26,6 +26,8 @@
         background: #f8f9fa;
         border-radius: 4px;
         font-family: monospace;
+        max-height: 300px;
+        overflow-y: auto;
       }
       #message {
         color: #1e3d59;
@@ -35,12 +37,16 @@
         color: #ff6e40;
         text-align: center;
         display: none;
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #ffebee;
+        border-radius: 4px;
       }
       #debug-log {
         white-space: pre-wrap;
         word-wrap: break-word;
-        max-height: 200px;
-        overflow-y: auto;
+        font-size: 12px;
+        line-height: 1.4;
       }
     </style>
   </head>
@@ -58,6 +64,7 @@
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         baseURL: "https://recursos.modatomia.com",
+        scope: "openid profile email",
       };
 
       function log(message, type = "info") {
@@ -79,65 +86,68 @@
           const auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
+            cacheLocation: "localstorage",
+            useRefreshTokens: true,
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              audience: `https://${AUTH_CONFIG.domain}/api/v2/`,
-              scope: "openid profile email",
+              scope: AUTH_CONFIG.scope,
             },
           });
 
           log("Cliente Auth0 creado");
 
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            log("Código o error encontrado en URL");
-
+          if (window.location.search.includes("code=")) {
             try {
+              log("Procesando código de autorización");
               await auth0Client.handleRedirectCallback();
-              log("Callback manejado exitosamente");
+              log("Callback procesado exitosamente");
 
               const isAuthenticated = await auth0Client.isAuthenticated();
               log("Estado de autenticación: " + isAuthenticated);
 
               if (isAuthenticated) {
-                const user = await auth0Client.getUser();
-                log("Usuario autenticado: " + user?.email);
+                try {
+                  const token = await auth0Client.getTokenSilently();
+                  log("Token obtenido exitosamente");
+                  localStorage.setItem("auth_token", token);
 
-                // Guardar token
-                const token = await auth0Client.getTokenSilently();
-                sessionStorage.setItem("auth_token", token);
-                log("Token guardado en sessionStorage");
+                  const user = await auth0Client.getUser();
+                  log("Usuario obtenido: " + user.email);
+                  localStorage.setItem("user_email", user.email);
 
-                // Limpiar URL y redirigir
-                window.history.replaceState(
-                  {},
-                  document.title,
-                  AUTH_CONFIG.baseURL
-                );
-                window.location.href = "/dashboard.html";
-                return;
+                  // Limpiar URL antes de redireccionar
+                  window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.pathname
+                  );
+
+                  window.location.href = "/dashboard.html";
+                  return;
+                } catch (tokenError) {
+                  log("Error obteniendo token: " + tokenError.message);
+                  throw tokenError;
+                }
               } else {
                 log("Usuario no autenticado después del callback");
+                throw new Error("Autenticación fallida");
               }
             } catch (callbackError) {
-              log("Error en handleRedirectCallback: " + callbackError.message);
+              log("Error en callback: " + callbackError.message);
               throw callbackError;
             }
           } else {
-            log("No se encontró código de autorización en la URL");
+            log("No se encontró código en la URL");
+            window.location.href = "/";
           }
-
-          // Si llegamos aquí, algo salió mal
-          window.location.href = "/?error=authentication_failed";
         } catch (error) {
-          log(`Error: ${error.message}`, "error");
+          log("Error general: " + error.message, "error");
           document.getElementById("message").textContent =
             "Error de autenticación";
           document.getElementById("error").textContent = error.message;
           document.getElementById("error").style.display = "block";
 
+          // Esperar un momento antes de redireccionar
           setTimeout(() => {
             window.location.href =
               "/?error=" + encodeURIComponent(error.message);
@@ -145,7 +155,7 @@
         }
       }
 
-      // Iniciar el proceso de callback cuando la página se carga
+      // Iniciar el proceso cuando la página se carga
       window.onload = handleCallback;
     </script>
   </body>

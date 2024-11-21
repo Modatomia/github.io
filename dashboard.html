@@ -6,6 +6,40 @@
     <title>Dashboard - Modatomía</title>
     <link rel="stylesheet" href="css/styles.css" />
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
+    <style>
+      .debug-panel {
+        margin: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+      }
+      .debug-panel pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+        font-size: 12px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .error-message {
+        color: #dc3545;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .module {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
   </head>
   <body>
     <header class="main-header">
@@ -20,7 +54,7 @@
     </header>
 
     <main class="container">
-      <div id="loading">Cargando...</div>
+      <div id="loading">Cargando contenido...</div>
       <div id="error" style="display: none" class="error-message"></div>
       <div id="content" style="display: none">
         <h2>Contenido del Curso</h2>
@@ -28,17 +62,8 @@
       </div>
     </main>
 
-    <div
-      id="debug-panel"
-      style="
-        display: none;
-        padding: 20px;
-        background: #f5f5f5;
-        margin: 20px;
-        border-radius: 4px;
-      "
-    >
-      <h3>Debug Information</h3>
+    <div id="debug-panel" class="debug-panel" style="display: none">
+      <h3>Información de Depuración</h3>
       <pre id="debug-log"></pre>
     </div>
 
@@ -47,16 +72,19 @@
         domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
         clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
         baseURL: "https://recursos.modatomia.com",
+        scope: "openid profile email",
       };
 
       let auth0Client = null;
 
       function debugLog(message) {
-        console.log(message);
+        const timestamp = new Date().toISOString();
+        const logMessage = `[${timestamp}] ${message}`;
+        console.log(logMessage);
+
         const debugLog = document.getElementById("debug-log");
         if (debugLog) {
-          debugLog.textContent +=
-            new Date().toISOString() + ": " + message + "\n";
+          debugLog.textContent = logMessage + "\n" + debugLog.textContent;
         }
       }
 
@@ -67,10 +95,11 @@
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
+            cacheLocation: "localstorage",
+            useRefreshTokens: true,
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              audience: `https://${AUTH_CONFIG.domain}/api/v2/`,
-              scope: "openid profile email",
+              scope: AUTH_CONFIG.scope,
             },
           });
 
@@ -80,46 +109,45 @@
           debugLog("¿Usuario autenticado? " + isAuthenticated);
 
           if (!isAuthenticated) {
-            const storedToken = sessionStorage.getItem("auth_token");
+            const storedToken = localStorage.getItem("auth_token");
             debugLog("Token almacenado: " + (storedToken ? "Sí" : "No"));
 
             if (!storedToken) {
-              debugLog("Redirigiendo a página de inicio...");
+              debugLog("No hay token, redirigiendo...");
               window.location.href = "/";
               return;
             }
           }
 
-          const user = await auth0Client.getUser();
-          debugLog("Información del usuario obtenida");
+          try {
+            const user = await auth0Client.getUser();
+            debugLog("Usuario obtenido exitosamente");
 
-          if (!user) {
-            debugLog("No se encontró información del usuario");
+            if (user) {
+              document.getElementById("user-email").textContent = user.email;
+              document.getElementById("loading").style.display = "none";
+              document.getElementById("content").style.display = "block";
+              await loadUserContent(user);
+            } else {
+              throw new Error("No se pudo obtener la información del usuario");
+            }
+          } catch (userError) {
+            debugLog("Error obteniendo usuario: " + userError.message);
             window.location.href = "/";
-            return;
           }
-
-          document.getElementById("user-email").textContent = user.email;
-          document.getElementById("loading").style.display = "none";
-          document.getElementById("content").style.display = "block";
-
-          debugLog("Cargando contenido del usuario...");
-          await loadUserContent(user);
         } catch (error) {
-          debugLog("Error: " + error.message);
-          console.error("Error:", error);
+          debugLog("Error en inicialización: " + error.message);
           document.getElementById("error").textContent =
-            "Error de autenticación";
+            "Error de autenticación: " + error.message;
           document.getElementById("error").style.display = "block";
         }
       }
 
       async function loadUserContent(user) {
         try {
-          debugLog("Obteniendo token...");
+          debugLog("Cargando contenido del usuario...");
           const token = await auth0Client.getTokenSilently();
 
-          debugLog("Verificando acceso...");
           const response = await fetch("/api/auth", {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -135,9 +163,8 @@
           displayUserContent(data.user.access_level);
         } catch (error) {
           debugLog("Error cargando contenido: " + error.message);
-          console.error("Error cargando contenido:", error);
           document.getElementById("error").textContent =
-            "Error cargando contenido";
+            "Error cargando contenido: " + error.message;
           document.getElementById("error").style.display = "block";
         }
       }
@@ -146,18 +173,39 @@
         const modulesContainer = document.getElementById("modules");
         debugLog("Mostrando contenido para nivel: " + accessLevel);
 
-        // Ejemplo de contenido según nivel de acceso
-        if (accessLevel === "curso_basico") {
-          modulesContainer.innerHTML = `
-                    <div class="module">
-                        <h3>Módulo 1: Fundamentos</h3>
-                        <div class="module-content">
-                            <p>Contenido del módulo básico</p>
+        let contentHTML = "";
+
+        switch (accessLevel) {
+          case "curso_basico":
+            contentHTML = `
+                        <div class="module">
+                            <h3>Módulo 1: Fundamentos</h3>
+                            <div class="module-content">
+                                <p>Contenido del módulo básico</p>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+            break;
+          case "curso_intermedio":
+            contentHTML = `
+                        <div class="module">
+                            <h3>Módulo 1: Fundamentos</h3>
+                            <div class="module-content">
+                                <p>Contenido del módulo intermedio</p>
+                            </div>
+                        </div>
+                    `;
+            break;
+          default:
+            contentHTML = `
+                        <div class="module">
+                            <h3>Acceso no determinado</h3>
+                            <p>Por favor, contacta con soporte.</p>
+                        </div>
+                    `;
         }
-        // Agregar más niveles según sea necesario
+
+        modulesContainer.innerHTML = contentHTML;
       }
 
       async function handleLogout() {
@@ -168,11 +216,11 @@
               returnTo: AUTH_CONFIG.baseURL,
             },
           });
+          localStorage.clear();
         } catch (error) {
           debugLog("Error en logout: " + error.message);
-          console.error("Error en logout:", error);
           // Forzar logout local en caso de error
-          sessionStorage.clear();
+          localStorage.clear();
           window.location.href = AUTH_CONFIG.baseURL;
         }
       }
@@ -180,12 +228,16 @@
       // Mostrar panel de debug en desarrollo
       if (
         window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.includes("vercel.app")
       ) {
         document.getElementById("debug-panel").style.display = "block";
       }
 
+      // Configurar eventos
       document.getElementById("logout").addEventListener("click", handleLogout);
+
+      // Inicializar cuando el documento esté listo
       window.onload = initAuth0;
     </script>
   </body>
