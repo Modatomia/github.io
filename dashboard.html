@@ -44,23 +44,59 @@
             clientId: AUTH_CONFIG.clientId,
             authorizationParams: {
               redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+              audience: `https://${AUTH_CONFIG.domain}/api/v2/`,
+              scope: "openid profile email",
             },
           });
 
           const isAuthenticated = await auth0Client.isAuthenticated();
           if (!isAuthenticated) {
+            const storedToken = sessionStorage.getItem("auth_token");
+            if (!storedToken) {
+              window.location.href = "/";
+              return;
+            }
+          }
+
+          const user = await auth0Client.getUser();
+          if (!user) {
             window.location.href = "/";
             return;
           }
 
-          const user = await auth0Client.getUser();
           document.getElementById("user-email").textContent = user.email;
           document.getElementById("loading").style.display = "none";
           document.getElementById("content").style.display = "block";
+
+          await loadUserContent(user);
         } catch (error) {
           console.error("Error:", error);
           document.getElementById("error").textContent =
             "Error de autenticación";
+          document.getElementById("error").style.display = "block";
+        }
+      }
+
+      async function loadUserContent(user) {
+        try {
+          const token = await auth0Client.getTokenSilently();
+
+          const response = await fetch("/api/auth", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Error verificando acceso");
+          }
+
+          const data = await response.json();
+          displayUserContent(data.user.access_level);
+        } catch (error) {
+          console.error("Error cargando contenido:", error);
+          document.getElementById("error").textContent =
+            "Error cargando contenido";
           document.getElementById("error").style.display = "block";
         }
       }
@@ -75,6 +111,24 @@
         } catch (error) {
           console.error("Error en logout:", error);
         }
+      }
+
+      // Función para mostrar el contenido según el nivel de acceso
+      function displayUserContent(accessLevel) {
+        const modulesContainer = document.getElementById("modules");
+        // Aquí puedes personalizar cómo se muestra el contenido según el nivel de acceso
+        // Por ejemplo:
+        if (accessLevel === "curso_basico") {
+          modulesContainer.innerHTML = `
+                    <div class="module">
+                        <h3>Módulo 1: Fundamentos</h3>
+                        <div class="module-content">
+                            <!-- Contenido del módulo -->
+                        </div>
+                    </div>
+                `;
+        }
+        // Agregar más niveles según sea necesario
       }
 
       document.getElementById("logout").addEventListener("click", handleLogout);
