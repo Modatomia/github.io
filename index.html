@@ -10,187 +10,6 @@
       rel="stylesheet"
     />
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="container">
-        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
-        <h1>Recursos Educativos</h1>
-        <div class="auth-buttons">
-          <button id="login" class="auth-button">Iniciar Sesión</button>
-          <button id="logout" class="auth-button" style="display: none">
-            Cerrar Sesión
-          </button>
-        </div>
-        <div id="auth-status" class="auth-status"></div>
-      </div>
-    </header>
-
-    <main class="container">
-      <section id="welcome-section" class="welcome-section">
-        <h2>Bienvenido a Modatomía</h2>
-        <p>
-          Portal de recursos educativos para estudiantes del curso de patronaje
-          digital con Optitex.
-        </p>
-      </section>
-
-      <section id="user-content" style="display: none"></section>
-
-      <div id="logoutModal" class="modal" style="display: none">
-        <div class="modal-content">
-          <h3>Confirmar Cierre de Sesión</h3>
-          <p>¿Estás seguro que deseas cerrar sesión?</p>
-          <div class="modal-buttons">
-            <button id="confirmLogout" class="modal-button confirm">
-              Sí, cerrar sesión
-            </button>
-            <button id="cancelLogout" class="modal-button cancel">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <footer class="main-footer">
-      <div class="container">
-        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
-      </div>
-    </footer>
-
-    <script>
-      const AUTH_CONFIG = {
-        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-        baseURL: "https://recursos.modatomia.com",
-      };
-
-      let auth0Client = null;
-
-      function showStatus(message, type = "info") {
-        console.log(`[${type}] ${message}`);
-        const authStatus = document.getElementById("auth-status");
-        if (authStatus && (type === "error" || message.includes("Error"))) {
-          authStatus.textContent = message;
-          setTimeout(() => {
-            authStatus.textContent = "";
-          }, 3000);
-        }
-      }
-
-      async function configureAuth0() {
-        try {
-          auth0Client = await auth0.createAuth0Client({
-            domain: AUTH_CONFIG.domain,
-            clientId: AUTH_CONFIG.clientId,
-            authorizationParams: {
-              redirect_uri: AUTH_CONFIG.baseURL,
-              response_type: "code",
-              scope: "openid profile email",
-            },
-          });
-        } catch (error) {
-          console.error("Error:", error);
-          showStatus(error.message, "error");
-        }
-      }
-
-      async function updateUI() {
-        try {
-          const isAuthenticated = await auth0Client.isAuthenticated();
-
-          if (isAuthenticated) {
-            const user = await auth0Client.getUser();
-            console.log("Usuario autenticado:", user);
-            window.location.href = "/dashboard.html";
-            return;
-          }
-
-          document.getElementById("login").style.display = "block";
-          document.getElementById("logout").style.display = "none";
-          document.getElementById("welcome-section").style.display = "block";
-          document.getElementById("user-content").style.display = "none";
-        } catch (error) {
-          showStatus(`Error: ${error.message}`);
-          console.error("Error actualizando UI:", error);
-        }
-      }
-
-      async function handleLogin() {
-        try {
-          showStatus("Iniciando sesión...");
-          await auth0Client.loginWithRedirect();
-        } catch (error) {
-          showStatus(`Error: ${error.message}`);
-          console.error("Error en login:", error);
-        }
-      }
-
-      async function handleLogout() {
-        try {
-          showStatus("Cerrando sesión...");
-          await auth0Client.logout({
-            logoutParams: {
-              returnTo: AUTH_CONFIG.baseURL,
-            },
-          });
-        } catch (error) {
-          showStatus(`Error: ${error.message}`);
-          console.error("Error en logout:", error);
-          localStorage.clear();
-          window.location.href = AUTH_CONFIG.baseURL;
-        }
-      }
-
-      function showLogoutModal() {
-        document.getElementById("logoutModal").style.display = "flex";
-      }
-
-      function hideLogoutModal() {
-        document.getElementById("logoutModal").style.display = "none";
-      }
-
-      window.onload = async () => {
-        try {
-          await configureAuth0();
-
-          document
-            .getElementById("login")
-            .addEventListener("click", handleLogin);
-          document
-            .getElementById("logout")
-            .addEventListener("click", showLogoutModal);
-          document
-            .getElementById("confirmLogout")
-            .addEventListener("click", async () => {
-              hideLogoutModal();
-              await handleLogout();
-            });
-          document
-            .getElementById("cancelLogout")
-            .addEventListener("click", hideLogoutModal);
-
-          if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=")
-          ) {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-          }
-
-          await updateUI();
-        } catch (error) {
-          showStatus(`Error: ${error.message}`);
-          console.error("Error en la inicialización:", error);
-        }
-      };
-    </script>
-
     <style>
       .auth-button {
         padding: 8px 16px;
@@ -226,76 +45,181 @@
         font-family: "Poppins", sans-serif;
         color: #666;
         min-height: 20px;
-      }
-
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
-
-      .modal-content {
-        background-color: white;
-        padding: 24px;
-        border-radius: 8px;
-        max-width: 400px;
-        width: 90%;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .modal-content h3 {
-        margin: 0 0 16px 0;
-        color: #1e3d59;
-        font-family: "Quicksand", sans-serif;
-        font-weight: 600;
-      }
-
-      .modal-content p {
-        margin: 0 0 20px 0;
-        color: #666;
-        font-family: "Poppins", sans-serif;
-      }
-
-      .modal-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-      }
-
-      .modal-button {
-        padding: 8px 16px;
-        border: none;
+        padding: 8px;
         border-radius: 4px;
-        cursor: pointer;
-        font-family: "Quicksand", sans-serif;
-        font-weight: 600;
-        transition: background-color 0.3s ease;
       }
 
-      .modal-button.confirm {
-        background-color: #ff6e40;
-        color: white;
+      .auth-status.error {
+        background-color: #ffebee;
+        color: #ff6e40;
       }
 
-      .modal-button.confirm:hover {
-        background-color: #ff5722;
+      #debug-panel {
+        margin: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        font-family: monospace;
+        display: none;
       }
 
-      .modal-button.cancel {
-        background-color: #e0e0e0;
-        color: #666;
-      }
-
-      .modal-button.cancel:hover {
-        background-color: #d5d5d5;
+      #debug-panel pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
     </style>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="container">
+        <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+        <h1>Recursos Educativos</h1>
+        <div class="auth-buttons">
+          <button id="login" class="auth-button">Iniciar Sesión</button>
+        </div>
+        <div id="auth-status" class="auth-status"></div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="welcome-section" class="welcome-section">
+        <h2>Bienvenido a Modatomía</h2>
+        <p>
+          Portal de recursos educativos para estudiantes del curso de patronaje
+          digital con Optitex.
+        </p>
+      </section>
+    </main>
+
+    <div id="debug-panel">
+      <h3>Debug Log</h3>
+      <pre id="debug-log"></pre>
+    </div>
+
+    <footer class="main-footer">
+      <div class="container">
+        <p>&copy; 2024 Modatomía. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
+    <script>
+      const AUTH_CONFIG = {
+        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
+        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
+        baseURL: "https://recursos.modatomia.com",
+      };
+
+      let auth0Client = null;
+
+      function debugLog(message) {
+        console.log(message);
+        const debugLog = document.getElementById("debug-log");
+        if (debugLog) {
+          const timestamp = new Date().toISOString();
+          debugLog.textContent =
+            `[${timestamp}] ${message}\n` + debugLog.textContent;
+        }
+      }
+
+      function showStatus(message, type = "info") {
+        debugLog(`${type.toUpperCase()}: ${message}`);
+        const authStatus = document.getElementById("auth-status");
+        if (authStatus) {
+          authStatus.textContent = message;
+          authStatus.className = `auth-status ${type}`;
+          if (type !== "error") {
+            setTimeout(() => {
+              authStatus.textContent = "";
+              authStatus.className = "auth-status";
+            }, 3000);
+          }
+        }
+      }
+
+      async function checkAndRedirect() {
+        try {
+          const isAuthenticated = await auth0Client.isAuthenticated();
+          debugLog(`Usuario autenticado: ${isAuthenticated}`);
+
+          if (isAuthenticated) {
+            const user = await auth0Client.getUser();
+            debugLog(`Redirigiendo usuario autenticado: ${user.email}`);
+            window.location.replace("/dashboard.html");
+            return true;
+          }
+          return false;
+        } catch (error) {
+          debugLog(`Error en checkAndRedirect: ${error.message}`);
+          return false;
+        }
+      }
+
+      async function initAuth0() {
+        try {
+          debugLog("Iniciando configuración de Auth0");
+
+          auth0Client = await auth0.createAuth0Client({
+            domain: AUTH_CONFIG.domain,
+            clientId: AUTH_CONFIG.clientId,
+            cacheLocation: "localstorage",
+            useRefreshTokens: true,
+            authorizationParams: {
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+              scope: "openid profile email",
+            },
+          });
+
+          debugLog("Auth0 configurado exitosamente");
+
+          // Manejar el callback si existe
+          if (
+            window.location.search.includes("code=") ||
+            window.location.search.includes("error=")
+          ) {
+            debugLog("Detectado código de autorización en la URL");
+            window.location.replace("/callback.html" + window.location.search);
+            return;
+          }
+
+          // Verificar autenticación
+          await checkAndRedirect();
+        } catch (error) {
+          debugLog(`Error en initAuth0: ${error.message}`);
+          showStatus(`Error de inicialización: ${error.message}`, "error");
+        }
+      }
+
+      async function handleLogin() {
+        try {
+          showStatus("Iniciando proceso de login...");
+          debugLog("Iniciando login con Auth0");
+
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
+              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
+            },
+          });
+        } catch (error) {
+          debugLog(`Error en login: ${error.message}`);
+          showStatus(`Error de login: ${error.message}`, "error");
+        }
+      }
+
+      // Eventos y inicialización
+      document.getElementById("login").addEventListener("click", handleLogin);
+
+      // Mostrar panel de debug en desarrollo
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.includes("vercel.app")
+      ) {
+        document.getElementById("debug-panel").style.display = "block";
+      }
+
+      // Inicializar cuando el documento esté listo
+      window.onload = initAuth0;
+    </script>
   </body>
 </html>
