@@ -18,13 +18,11 @@
         padding: 10px;
         margin: 10px 0;
         font-family: "Poppins", sans-serif;
+        display: none;
       }
 
       .loading {
-        text-align: center;
-        padding: 20px;
-        color: #666;
-        font-family: "Quicksand", sans-serif;
+        display: none;
       }
 
       .module {
@@ -43,10 +41,14 @@
         border-bottom: 2px solid #f5f5f5;
       }
 
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
       #user-email {
-        font-family: "Poppins", sans-serif;
-        color: #666;
-        margin-right: 15px;
+        display: none;
       }
 
       .auth-button {
@@ -188,12 +190,6 @@
       .error-module p {
         color: #666;
       }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
     </style>
   </head>
   <body>
@@ -209,10 +205,9 @@
     </header>
 
     <main class="container">
-      <div id="loading" class="loading">Cargando contenido...</div>
-      <div id="error" style="display: none" class="error-message"></div>
-      <div id="content" style="display: none">
-        <h2>Contenido del Curso</h2>
+      <div id="loading" class="loading"></div>
+      <div id="error" class="error-message"></div>
+      <div id="content">
         <div id="modules"></div>
       </div>
     </main>
@@ -226,30 +221,23 @@
 
       let auth0Client = null;
 
-      function debugLog(message) {
-        // Solo mostrar en consola en desarrollo
+      function showError(message) {
         if (
           window.location.hostname === "localhost" ||
           window.location.hostname === "127.0.0.1"
         ) {
-          console.log(message);
+          console.log(`Error: ${message}`);
         }
-      }
 
-      function showError(message) {
-        debugLog(`Error: ${message}`);
         const errorElement = document.getElementById("error");
-        if (errorElement) {
+        if (errorElement && message.includes("crítico")) {
           errorElement.textContent = message;
           errorElement.style.display = "block";
         }
-        document.getElementById("loading").style.display = "none";
       }
 
       function displayUserContent(accessLevel) {
         const modulesContainer = document.getElementById("modules");
-        debugLog(`Mostrando contenido para nivel: ${accessLevel}`);
-
         let contentHTML = "";
 
         switch (accessLevel) {
@@ -319,14 +307,10 @@
         }
 
         modulesContainer.innerHTML = contentHTML;
-        document.getElementById("content").style.display = "block";
-        document.getElementById("loading").style.display = "none";
       }
 
       async function initAuth0() {
         try {
-          debugLog("Iniciando Auth0...");
-
           auth0Client = await auth0.createAuth0Client({
             domain: AUTH_CONFIG.domain,
             clientId: AUTH_CONFIG.clientId,
@@ -338,15 +322,11 @@
             },
           });
 
-          debugLog("Auth0 configurado exitosamente");
-
           const isAuthenticated = await auth0Client.isAuthenticated();
-          debugLog(`Usuario autenticado: ${isAuthenticated}`);
 
           if (!isAuthenticated) {
             const token = localStorage.getItem("auth_token");
             if (!token) {
-              debugLog("No se encontró token de autenticación");
               window.location.replace("/");
               return;
             }
@@ -354,18 +334,14 @@
 
           const user = await auth0Client.getUser();
           if (!user) {
-            throw new Error("No se pudo obtener la información del usuario");
+            throw new Error("Error crítico: No se pudo verificar el acceso");
           }
 
-          document.getElementById("user-email").textContent = user.email;
           displayUserContent("curso_basico");
         } catch (error) {
-          debugLog(`Error en inicialización: ${error.message}`);
-          showError("Error de inicialización: " + error.message);
-
+          showError("Error crítico: " + error.message);
           localStorage.clear();
           sessionStorage.clear();
-
           setTimeout(() => {
             window.location.replace("/");
           }, 3000);
@@ -374,7 +350,6 @@
 
       async function handleLogout() {
         try {
-          debugLog("Iniciando cierre de sesión...");
           localStorage.clear();
           sessionStorage.clear();
 
@@ -388,7 +363,6 @@
             window.location.replace("/");
           }
         } catch (error) {
-          debugLog(`Error en logout: ${error.message}`);
           window.location.replace("/");
         }
       }
