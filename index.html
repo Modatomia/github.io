@@ -38,14 +38,6 @@
         position: relative;
       }
 
-      .modal-content h3 {
-        color: var(--blue-primary);
-        font-family: var(--font-primary);
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
-      }
-
       .modal-header {
         text-align: center;
         margin-bottom: 2rem;
@@ -57,6 +49,20 @@
         margin-bottom: 1rem;
       }
 
+      .modal-header h3 {
+        color: var(--blue-primary);
+        font-family: var(--font-primary);
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .modal-header p {
+        color: var(--gray-600);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin: 0;
+      }
+
       .login-options {
         display: flex;
         flex-direction: column;
@@ -66,9 +72,7 @@
       .login-option {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1.5rem;
+        padding: 0.875rem 1.5rem;
         border-radius: var(--radius-md);
         font-family: var(--font-primary);
         font-weight: 500;
@@ -79,6 +83,7 @@
         background: white;
         color: var(--gray-800);
         width: 100%;
+        position: relative;
       }
 
       .login-option:hover {
@@ -89,17 +94,13 @@
         width: 20px;
         height: 20px;
         object-fit: contain;
+        margin-right: 12px;
       }
 
-      .login-option.magic-link {
-        background: var(--teal);
-        color: white;
-        border: none;
-      }
-
-      .login-option.magic-link:hover {
-        background: var(--teal-dark);
-        box-shadow: 0 2px 4px rgba(26, 188, 156, 0.2);
+      .login-option span {
+        flex: 1;
+        text-align: center;
+        margin-right: 32px; /* Para compensar el espacio del icono */
       }
 
       .login-option.google {
@@ -110,7 +111,7 @@
 
       .login-option.google:hover {
         background-color: #f8f9fa;
-        box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+        box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
       }
 
       .login-option.microsoft {
@@ -121,78 +122,7 @@
 
       .login-option.microsoft:hover {
         background-color: #f8f9fa;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-      }
-
-      .login-divider {
-        display: flex;
-        align-items: center;
-        text-align: center;
-        margin: 1.5rem 0;
-        color: var(--gray-500);
-        font-size: 0.9rem;
-      }
-
-      .login-divider::before,
-      .login-divider::after {
-        content: "";
-        flex: 1;
-        border-bottom: 1px solid var(--gray-200);
-      }
-
-      .login-divider span {
-        margin: 0 1rem;
-      }
-
-      #emailInput {
-        width: 100%;
-        padding: 0.75rem;
-        margin: 1rem 0;
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-md);
-        font-family: var(--font-secondary);
-        font-size: 1rem;
-      }
-
-      #emailInput:focus {
-        outline: none;
-        border-color: var(--teal);
-        box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
-      }
-
-      .modal-buttons {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1.5rem;
-      }
-
-      .modal-button {
-        flex: 1;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: var(--radius-md);
-        font-family: var(--font-primary);
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .modal-button.primary {
-        background: var(--teal);
-        color: white;
-      }
-
-      .modal-button.primary:hover {
-        background: var(--teal-dark);
-      }
-
-      .modal-button.secondary {
-        background: var(--gray-200);
-        color: var(--gray-700);
-      }
-
-      .modal-button.secondary:hover {
-        background: var(--gray-300);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
       }
 
       .close-button {
@@ -213,12 +143,18 @@
         color: var(--gray-700);
       }
 
-      .magic-link-message {
-        text-align: center;
-        color: var(--gray-600);
-        font-size: 0.95rem;
-        margin-bottom: 1.5rem;
-        line-height: 1.5;
+      @media (max-width: 480px) {
+        .modal-content {
+          padding: 2rem;
+        }
+
+        .login-option {
+          padding: 0.75rem 1rem;
+        }
+
+        .modal-header img {
+          width: 100px;
+        }
       }
     </style>
   </head>
@@ -244,7 +180,7 @@
         </p>
       </section>
 
-      <!-- Modal de Opciones de Login -->
+      <!-- Modal de Login -->
       <div id="loginModal" class="login-modal">
         <div class="modal-content">
           <button class="close-button" onclick="closeModal('loginModal')">
@@ -253,22 +189,15 @@
           <div class="modal-header">
             <img src="assets/logo.png" alt="Modatomía Logo" />
             <h3>Iniciar Sesión</h3>
+            <p>Accede con la misma cuenta que usaste para comprar el curso</p>
           </div>
           <div class="login-options">
-            <button onclick="handleMagicLink()" class="login-option magic-link">
-              ✨ Acceder con Magic Link
-            </button>
-
-            <div class="login-divider">
-              <span>o continuar con</span>
-            </div>
-
             <button
               onclick="handleSocialLogin('google')"
               class="login-option google"
             >
               <img src="assets/google.svg" alt="Google" />
-              Continuar con Google
+              <span>Continuar con Google</span>
             </button>
 
             <button
@@ -276,42 +205,7 @@
               class="login-option microsoft"
             >
               <img src="assets/microsoft.svg" alt="Microsoft" />
-              Continuar con Microsoft
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal de Magic Link -->
-      <div id="magicLinkModal" class="login-modal">
-        <div class="modal-content">
-          <button class="close-button" onclick="closeModal('magicLinkModal')">
-            &times;
-          </button>
-          <div class="modal-header">
-            <img src="assets/logo.png" alt="Modatomía Logo" />
-            <h3>Acceder con Magic Link</h3>
-          </div>
-          <p class="magic-link-message">
-            Ingresa tu correo electrónico y te enviaremos un enlace mágico para
-            iniciar sesión de forma segura.
-          </p>
-          <input
-            type="email"
-            id="emailInput"
-            placeholder="Ingresa tu correo electrónico"
-            required
-            onkeypress="if(event.key === 'Enter') sendMagicLink()"
-          />
-          <div class="modal-buttons">
-            <button
-              onclick="closeModal('magicLinkModal')"
-              class="modal-button secondary"
-            >
-              Cancelar
-            </button>
-            <button onclick="sendMagicLink()" class="modal-button primary">
-              Enviar enlace
+              <span>Continuar con Microsoft</span>
             </button>
           </div>
         </div>
@@ -369,57 +263,10 @@
 
       function showModal(modalId) {
         document.getElementById(modalId).classList.add("active");
-        if (modalId === "magicLinkModal") {
-          document.getElementById("emailInput").focus();
-        }
       }
 
       function closeModal(modalId) {
         document.getElementById(modalId).classList.remove("active");
-        if (modalId === "magicLinkModal") {
-          document.getElementById("emailInput").value = "";
-        }
-      }
-
-      async function handleMagicLink() {
-        closeModal("loginModal");
-        showModal("magicLinkModal");
-      }
-
-      async function sendMagicLink() {
-        const email = document.getElementById("emailInput").value;
-        if (!email) {
-          alert("Por favor, ingresa tu correo electrónico");
-          return;
-        }
-
-        if (!email.includes("@")) {
-          alert("Por favor, ingresa un correo electrónico válido");
-          return;
-        }
-
-        try {
-          await auth0Client.loginWithRedirect({
-            authorizationParams: {
-              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              connection: "email",
-              email: email,
-              response_type: "code",
-              scope: "openid profile email",
-              prompt: "login",
-            },
-            openUrl: (url) => {
-              window.location.href = url;
-            },
-          });
-
-          closeModal("magicLinkModal");
-        } catch (error) {
-          console.error("Error:", error);
-          alert(
-            "Error al procesar la solicitud. Por favor, intenta nuevamente."
-          );
-        }
       }
 
       async function handleSocialLogin(connection) {
@@ -443,7 +290,7 @@
         .getElementById("login")
         .addEventListener("click", () => showModal("loginModal"));
 
-      // Close modals when clicking outside
+      // Close modal when clicking outside
       window.onclick = function (event) {
         if (event.target.classList.contains("login-modal")) {
           event.target.classList.remove("active");
