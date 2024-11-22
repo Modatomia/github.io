@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Modatomía</title>
+
+    <!-- Fuentes -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      /* Estilos específicos del dashboard */
+      .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .course-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .course-header {
+        background: var(--blue-primary);
+        color: white;
+        padding: 1.5rem;
+      }
+
+      .course-content {
+        padding: 1.5rem;
+      }
+
+      .module-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .module-item {
+        margin-bottom: 1.5rem;
+      }
+
+      .module-title {
+        font-family: "Quicksand", sans-serif;
+        font-weight: 600;
+        color: var(--blue-primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .lesson-list {
+        list-style: none;
+        padding-left: 1rem;
+      }
+
+      .lesson-item {
+        margin: 0.5rem 0;
+      }
+
+      .lesson-link {
+        color: var(--gray-800);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .lesson-link:hover {
+        background: var(--gray-100);
+        color: var(--blue-primary);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-600);
+      }
+
+      .error-message {
+        background: #fee2e2;
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 4px;
+      }
+
+      .welcome-section {
+        background: linear-gradient(to right, var(--blue-primary), var(--teal));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+      }
+
+      .progress-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-bar {
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--teal);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="container">
+        <div class="logo-title-group">
+          <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
+          <h1>Dashboard</h1>
+        </div>
+        <nav class="user-nav">
+          <span id="userEmail"></span>
+          <button id="logoutBtn" class="auth-button">Cerrar Sesión</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="dashboard-container">
+      <div id="loadingIndicator" class="loading">Cargando tu contenido...</div>
+      <div id="errorMessage" class="error-message" style="display: none"></div>
+
+      <div id="dashboardContent" style="display: none">
+        <section class="welcome-section">
+          <h2>Bienvenido/a, <span id="userName">Estudiante</span></h2>
+          <p>Continúa tu aprendizaje en patronaje digital con Optitex</p>
+        </section>
+
+        <section class="progress-section">
+          <h3>Tu Progreso</h3>
+          <div class="progress-bar">
+            <div
+              id="progressFill"
+              class="progress-fill"
+              style="width: 0%"
+            ></div>
+          </div>
+        </section>
+
+        <section class="courses-grid" id="coursesGrid">
+          <!-- Los cursos se cargarán dinámicamente aquí -->
+        </section>
+      </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      // Este código se moverá a un archivo separado
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const token = localStorage.getItem("auth_token");
+          if (!token) {
+            window.location.replace("/");
+            return;
+          }
+
+          const response = await fetch(`${config.API_URL}/api/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Error al verificar acceso");
+          }
+
+          const data = await response.json();
+
+          // Mostrar contenido
+          document.getElementById("loadingIndicator").style.display = "none";
+          document.getElementById("dashboardContent").style.display = "block";
+
+          // Actualizar nombre de usuario
+          document.getElementById("userName").textContent =
+            data.user.name || "Estudiante";
+          document.getElementById("userEmail").textContent = data.user.email;
+
+          // Renderizar cursos
+          const coursesGrid = document.getElementById("coursesGrid");
+          data.courses.forEach((course) => {
+            const courseElement = createCourseElement(course);
+            coursesGrid.appendChild(courseElement);
+          });
+        } catch (error) {
+          console.error("Error:", error);
+          document.getElementById("loadingIndicator").style.display = "none";
+          const errorElement = document.getElementById("errorMessage");
+          errorElement.textContent =
+            "Error al cargar el contenido. Por favor, intenta nuevamente.";
+          errorElement.style.display = "block";
+        }
+      });
+
+      function createCourseElement(course) {
+        const courseDiv = document.createElement("div");
+        courseDiv.className = "course-card";
+
+        courseDiv.innerHTML = `
+                <div class="course-header">
+                    <h3>${course.name}</h3>
+                </div>
+                <div class="course-content">
+                    <ul class="module-list">
+                        ${course.modules
+                          .map(
+                            (module) => `
+                            <li class="module-item">
+                                <h4 class="module-title">${module.title}</h4>
+                                <ul class="lesson-list">
+                                    ${
+                                      module.lessons
+                                        ? module.lessons
+                                            .map(
+                                              (lesson) => `
+                                        <li class="lesson-item">
+                                            <a href="${lesson.path}" class="lesson-link">
+                                                ${lesson.title}
+                                            </a>
+                                        </li>
+                                    `
+                                            )
+                                            .join("")
+                                        : ""
+                                    }
+                                </ul>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                </div>
+            `;
+
+        return courseDiv;
+      }
+
+      // Manejador de cierre de sesión
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("auth_token");
+        window.location.replace("/");
+      });
+    </script>
+  </body>
+</html>
