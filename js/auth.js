@@ -31,14 +31,14 @@ async function initAuth0() {
     await fetchUserContent();
   } catch (error) {
     console.error("Error en autenticación:", error);
-    showError("Error crítico: " + error.message);
+    showError("Error de autenticación");
   }
 }
 
 async function fetchUserContent() {
   try {
     const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${config.API_URL}/api/auth/verify`, {
+    const response = await fetch(`${config.API_URL}/verify`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -82,6 +82,3 @@ function showError(message) {
     errorElement.style.display = "block";
   }
 }
-
-// Event Listeners
-document.getElementById("logout").addEventListener("click", handleLogout);
