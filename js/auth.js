@@ -35,34 +35,36 @@ async function initAuth0() {
   }
 }
 
+// js/auth.js
 async function fetchUserContent() {
   try {
-    const token = localStorage.getItem("auth_token");
-    if (!token) {
-      throw new Error("No hay token de acceso");
-    }
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+          throw new Error('No hay token de acceso');
+      }
 
-    const response = await fetch(`${config.API_URL}/api/verify`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      // Corregida la URL del endpoint
+      const response = await fetch(`${config.API_URL}/api/verify`, {
+          method: 'GET',
+          headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+          }
+      });
 
-    if (!response.ok) {
-      throw new Error("Error al verificar acceso");
-    }
+      if (!response.ok) {
+          throw new Error('Error al verificar acceso');
+      }
 
-    const data = await response.json();
-    if (data.authenticated) {
-      displayUserContent(data.access_level || "curso_basico");
-    } else {
-      throw new Error("Usuario no autenticado");
-    }
+      const data = await response.json();
+      if (data.authenticated) {
+          displayUserContent(data.access_level || "curso_basico");
+      } else {
+          throw new Error('Usuario no autenticado');
+      }
   } catch (error) {
-    console.error("Error cargando contenido:", error);
-    showError("Error al cargar el contenido");
+      console.error("Error cargando contenido:", error);
+      showError("Error al cargar el contenido");
   }
 }
 
