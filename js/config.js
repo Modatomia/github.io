@@ -5,5 +5,5 @@ const config = {
     clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
     baseURL: window.location.origin,
   },
-  API_URL: "https://modatomia-recursos.vercel.app", // Ajusta esta URL según tu despliegue en Vercel
+  API_URL: "https://modatomia-recursos.vercel.app/api",
 };
