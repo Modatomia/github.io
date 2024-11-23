@@ -38,9 +38,15 @@ async function initAuth0() {
 async function fetchUserContent() {
   try {
     const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${config.API_URL}/verify`, {
+    if (!token) {
+      throw new Error("No hay token de acceso");
+    }
+
+    const response = await fetch(`${config.API_URL}/api/verify`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
@@ -49,7 +55,11 @@ async function fetchUserContent() {
     }
 
     const data = await response.json();
-    displayUserContent(data.access_level || "curso_basico");
+    if (data.authenticated) {
+      displayUserContent(data.access_level || "curso_basico");
+    } else {
+      throw new Error("Usuario no autenticado");
+    }
   } catch (error) {
     console.error("Error cargando contenido:", error);
     showError("Error al cargar el contenido");
@@ -58,7 +68,7 @@ async function fetchUserContent() {
 
 async function handleLogout() {
   try {
-    localStorage.clear();
+    localStorage.removeItem("auth_token");
     sessionStorage.clear();
 
     if (auth0Client) {
@@ -82,3 +92,6 @@ function showError(message) {
     errorElement.style.display = "block";
   }
 }
+
+// Asegurarse de que el botón de logout esté conectado
+document.getElementById("logout").addEventListener("click", handleLogout);
