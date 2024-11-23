@@ -5,6 +5,5 @@ const config = {
     clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
     baseURL: window.location.origin,
   },
-  API_URL:
-    "https://modatomia-recursos-mmyp516lg-pilar-caicedos-projects.vercel.app",
+  API_URL: "https://modatomia-recursos.vercel.app", // URL de producción estable
 };
