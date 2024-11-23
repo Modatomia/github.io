@@ -6,5 +6,5 @@ const config = {
     baseURL: window.location.origin,
   },
   API_URL:
-    "https://modatomia-recursos-c2oniglkn-pilar-caicedos-projects.vercel.app",
+    "https://modatomia-recursos-mmyp516lg-pilar-caicedos-projects.vercel.app",
 };
