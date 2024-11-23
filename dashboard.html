@@ -4,191 +4,131 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - Modatomía</title>
+
+    <!-- Fuentes -->
     <link
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="css/styles.css" />
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1.2/auth0-spa-js.production.js"></script>
     <style>
-      .error-message {
-        color: #ff6e40;
-        background-color: #ffebee;
-        border-radius: 4px;
-        padding: 10px;
-        margin: 10px 0;
-        font-family: "Poppins", sans-serif;
-        display: none;
+      /* Estilos específicos del dashboard */
+      .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
       }
 
-      .loading {
-        display: none;
+      .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
       }
 
-      .module {
+      .course-card {
         background: white;
         border-radius: 12px;
-        padding: 30px;
-        margin: 20px 0;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
       }
 
-      .module-title {
-        color: #1e3d59;
-        font-size: 24px;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f5f5f5;
-      }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      #user-email {
-        display: none;
-      }
-
-      .auth-button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: "Quicksand", sans-serif;
-        font-weight: 600;
-        background-color: #ff6e40;
+      .course-header {
+        background: var(--blue-primary);
         color: white;
-        transition: background-color 0.3s ease;
+        padding: 1.5rem;
       }
 
-      .auth-button:hover {
-        background-color: #ff5722;
+      .course-content {
+        padding: 1.5rem;
       }
 
-      .welcome-message {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-      }
-
-      .welcome-message p {
-        margin: 0;
-        color: #666;
-        line-height: 1.6;
-      }
-
-      .resources-section,
-      .exercises-section {
-        margin-top: 30px;
-      }
-
-      .resources-section h4,
-      .exercises-section h4 {
-        color: #1e3d59;
-        font-size: 20px;
-        margin-bottom: 20px;
-      }
-
-      .resources-list {
+      .module-list {
         list-style: none;
         padding: 0;
         margin: 0;
       }
 
-      .resource-item {
-        display: flex;
-        align-items: start;
-        padding: 15px;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
+      .module-item {
+        margin-bottom: 1.5rem;
       }
 
-      .resource-item:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-color: #1abc9c;
+      .module-title {
+        font-family: "Quicksand", sans-serif;
+        font-weight: 600;
+        color: var(--blue-primary);
+        margin-bottom: 0.5rem;
       }
 
-      .resource-icon {
-        font-size: 24px;
-        margin-right: 15px;
-        color: #1abc9c;
+      .lesson-list {
+        list-style: none;
+        padding-left: 1rem;
       }
 
-      .resource-details h5 {
-        margin: 0 0 5px 0;
-        color: #1e3d59;
-        font-size: 16px;
+      .lesson-item {
+        margin: 0.5rem 0;
       }
 
-      .resource-details p {
-        margin: 0 0 10px 0;
-        color: #666;
-        font-size: 14px;
-      }
-
-      .resource-link,
-      .exercise-link {
-        display: inline-block;
-        padding: 6px 12px;
-        border-radius: 4px;
-        background-color: #1abc9c;
-        color: white;
+      .lesson-link {
+        color: var(--gray-800);
         text-decoration: none;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
       }
 
-      .resource-link:hover,
-      .exercise-link:hover {
-        background-color: #16a085;
+      .lesson-link:hover {
+        background: var(--gray-100);
+        color: var(--blue-primary);
       }
 
-      .exercises-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-      }
-
-      .exercise-card {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
+      .loading {
         text-align: center;
+        padding: 2rem;
+        color: var(--gray-600);
       }
 
-      .exercise-icon {
-        font-size: 24px;
-        margin-bottom: 10px;
+      .error-message {
+        background: #fee2e2;
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 4px;
       }
 
-      .exercise-card h5 {
-        margin: 0 0 10px 0;
-        color: #1e3d59;
+      .welcome-section {
+        background: linear-gradient(to right, var(--blue-primary), var(--teal));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
       }
 
-      .exercise-card p {
-        margin: 0 0 15px 0;
-        color: #666;
-        font-size: 14px;
+      .progress-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
 
-      .error-module {
-        text-align: center;
-        padding: 40px;
+      .progress-bar {
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
       }
 
-      .error-module h3 {
-        color: #ff6e40;
-        margin-bottom: 10px;
-      }
-
-      .error-module p {
-        color: #666;
+      .progress-fill {
+        height: 100%;
+        background: var(--teal);
+        border-radius: 4px;
+        transition: width 0.3s ease;
       }
     </style>
   </head>
@@ -199,178 +139,137 @@
           <img src="assets/logo.png" alt="Modatomía Logo" class="logo" />
           <h1>Dashboard</h1>
         </div>
-        <div class="user-info">
-          <span id="user-email"></span>
-          <button id="logout" class="auth-button">Cerrar Sesión</button>
-        </div>
+        <nav class="user-nav">
+          <span id="userEmail"></span>
+          <button id="logoutBtn" class="auth-button">Cerrar Sesión</button>
+        </nav>
       </div>
     </header>
 
-    <main class="container">
-      <div id="loading" class="loading"></div>
-      <div id="error" class="error-message"></div>
-      <div id="content">
-        <div id="modules"></div>
+    <main class="dashboard-container">
+      <div id="loadingIndicator" class="loading">Cargando tu contenido...</div>
+      <div id="errorMessage" class="error-message" style="display: none"></div>
+
+      <div id="dashboardContent" style="display: none">
+        <section class="welcome-section">
+          <h2>Bienvenido/a, <span id="userName">Estudiante</span></h2>
+          <p>Continúa tu aprendizaje en patronaje digital con Optitex</p>
+        </section>
+
+        <section class="progress-section">
+          <h3>Tu Progreso</h3>
+          <div class="progress-bar">
+            <div
+              id="progressFill"
+              class="progress-fill"
+              style="width: 0%"
+            ></div>
+          </div>
+        </section>
+
+        <section class="courses-grid" id="coursesGrid">
+          <!-- Los cursos se cargarán dinámicamente aquí -->
+        </section>
       </div>
     </main>
 
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
     <script>
-      const AUTH_CONFIG = {
-        domain: "dev-ao28w8mm01qxvpqa.us.auth0.com",
-        clientId: "POytIwtV3rWDTkS4apTJCeMzhVqX8v1e",
-        baseURL: "https://recursos.modatomia.com",
-      };
-
-      let auth0Client = null;
-
-      function showError(message) {
-        if (
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"
-        ) {
-          console.log(`Error: ${message}`);
-        }
-
-        const errorElement = document.getElementById("error");
-        if (errorElement && message.includes("crítico")) {
-          errorElement.textContent = message;
-          errorElement.style.display = "block";
-        }
-      }
-
-      function displayUserContent(accessLevel) {
-        const modulesContainer = document.getElementById("modules");
-        let contentHTML = "";
-
-        switch (accessLevel) {
-          case "curso_basico":
-            contentHTML = `
-              <div class="module">
-                <h3 class="module-title">Módulo 1: Fundamentos de Optitex</h3>
-                <div class="module-content">
-                  <div class="welcome-message">
-                    <p>¡Bienvenido/a al curso de Optitex! Aquí encontrarás todo el material complementario organizado por secciones.</p>
-                  </div>
-                  
-                  <div class="resources-section">
-                    <h4>Guías y Recursos</h4>
-                    <ul class="resources-list">
-                      <li>
-                        <div class="resource-item">
-                          <div class="resource-icon">📄</div>
-                          <div class="resource-details">
-                            <h5>Introducción a Optitex</h5>
-                            <p>Guía básica de configuración y primeros pasos</p>
-                            <a href="#" class="resource-link">Ver documento</a>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div class="resource-item">
-                          <div class="resource-icon">📚</div>
-                          <div class="resource-details">
-                            <h5>Manual de Referencia</h5>
-                            <p>Comandos y funciones principales</p>
-                            <a href="#" class="resource-link">Ver documento</a>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div class="exercises-section">
-                    <h4>Ejercicios Prácticos</h4>
-                    <div class="exercises-grid">
-                      <div class="exercise-card">
-                        <div class="exercise-icon">✏️</div>
-                        <h5>Ejercicio 1</h5>
-                        <p>Configuración inicial del espacio de trabajo</p>
-                        <a href="#" class="exercise-link">Ver ejercicio</a>
-                      </div>
-                      <div class="exercise-card">
-                        <div class="exercise-icon">✏️</div>
-                        <h5>Ejercicio 2</h5>
-                        <p>Creación de patrones básicos</p>
-                        <a href="#" class="exercise-link">Ver ejercicio</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-            break;
-          default:
-            contentHTML = `
-              <div class="module error-module">
-                <h3>Contenido no disponible</h3>
-                <p>No se encontró contenido para tu nivel de acceso.</p>
-              </div>
-            `;
-        }
-
-        modulesContainer.innerHTML = contentHTML;
-      }
-
-      async function initAuth0() {
+      // Este código se moverá a un archivo separado
+      document.addEventListener("DOMContentLoaded", async () => {
         try {
-          auth0Client = await auth0.createAuth0Client({
-            domain: AUTH_CONFIG.domain,
-            clientId: AUTH_CONFIG.clientId,
-            cacheLocation: "localstorage",
-            useRefreshTokens: true,
-            authorizationParams: {
-              redirect_uri: `${AUTH_CONFIG.baseURL}/callback.html`,
-              scope: "openid profile email",
+          const token = localStorage.getItem("auth_token");
+          if (!token) {
+            window.location.replace("/");
+            return;
+          }
+
+          const response = await fetch(`${config.API_URL}/api/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
             },
           });
 
-          const isAuthenticated = await auth0Client.isAuthenticated();
-
-          if (!isAuthenticated) {
-            const token = localStorage.getItem("auth_token");
-            if (!token) {
-              window.location.replace("/");
-              return;
-            }
+          if (!response.ok) {
+            throw new Error("Error al verificar acceso");
           }
 
-          const user = await auth0Client.getUser();
-          if (!user) {
-            throw new Error("Error crítico: No se pudo verificar el acceso");
-          }
+          const data = await response.json();
 
-          displayUserContent("curso_basico");
+          // Mostrar contenido
+          document.getElementById("loadingIndicator").style.display = "none";
+          document.getElementById("dashboardContent").style.display = "block";
+
+          // Actualizar nombre de usuario
+          document.getElementById("userName").textContent =
+            data.user.name || "Estudiante";
+          document.getElementById("userEmail").textContent = data.user.email;
+
+          // Renderizar cursos
+          const coursesGrid = document.getElementById("coursesGrid");
+          data.courses.forEach((course) => {
+            const courseElement = createCourseElement(course);
+            coursesGrid.appendChild(courseElement);
+          });
         } catch (error) {
-          showError("Error crítico: " + error.message);
-          localStorage.clear();
-          sessionStorage.clear();
-          setTimeout(() => {
-            window.location.replace("/");
-          }, 3000);
+          console.error("Error:", error);
+          document.getElementById("loadingIndicator").style.display = "none";
+          const errorElement = document.getElementById("errorMessage");
+          errorElement.textContent =
+            "Error al cargar el contenido. Por favor, intenta nuevamente.";
+          errorElement.style.display = "block";
         }
+      });
+
+      function createCourseElement(course) {
+        const courseDiv = document.createElement("div");
+        courseDiv.className = "course-card";
+
+        courseDiv.innerHTML = `
+                <div class="course-header">
+                    <h3>${course.name}</h3>
+                </div>
+                <div class="course-content">
+                    <ul class="module-list">
+                        ${course.modules
+                          .map(
+                            (module) => `
+                            <li class="module-item">
+                                <h4 class="module-title">${module.title}</h4>
+                                <ul class="lesson-list">
+                                    ${
+                                      module.lessons
+                                        ? module.lessons
+                                            .map(
+                                              (lesson) => `
+                                        <li class="lesson-item">
+                                            <a href="${lesson.path}" class="lesson-link">
+                                                ${lesson.title}
+                                            </a>
+                                        </li>
+                                    `
+                                            )
+                                            .join("")
+                                        : ""
+                                    }
+                                </ul>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                </div>
+            `;
+
+        return courseDiv;
       }
 
-      async function handleLogout() {
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-
-          if (auth0Client) {
-            await auth0Client.logout({
-              logoutParams: {
-                returnTo: AUTH_CONFIG.baseURL,
-              },
-            });
-          } else {
-            window.location.replace("/");
-          }
-        } catch (error) {
-          window.location.replace("/");
-        }
-      }
-
-      document.getElementById("logout").addEventListener("click", handleLogout);
-      window.onload = initAuth0;
+      // Manejador de cierre de sesión
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("auth_token");
+        window.location.replace("/");
+      });
     </script>
   </body>
 </html>
