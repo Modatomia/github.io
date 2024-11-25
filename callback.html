@@ -84,53 +84,64 @@
             },
           });
 
-          // Manejar el callback
           if (
-            window.location.search.includes("code=") ||
-            window.location.search.includes("error=") ||
+            window.location.search.includes("code=") &&
             window.location.search.includes("state=")
           ) {
-            // Procesar la respuesta de autenticación
+            // Procesar callback
             await auth0Client.handleRedirectCallback();
 
             // Verificar autenticación
             const isAuthenticated = await auth0Client.isAuthenticated();
-
-            if (isAuthenticated) {
-              // Obtener información del usuario y token
-              const token = await auth0Client.getTokenSilently();
-              const user = await auth0Client.getUser();
-
-              // Guardar datos de sesión
-              localStorage.setItem("auth_token", token);
-              localStorage.setItem("user_email", user.email);
-
-              // Limpiar URL y redirigir
-              window.history.replaceState(
-                {},
-                document.title,
-                window.location.pathname
-              );
-              window.location.replace("/dashboard.html");
-              return;
+            if (!isAuthenticated) {
+              throw new Error("Fallo en la autenticación");
             }
+
+            // Obtener token e información del usuario
+            const token = await auth0Client.getTokenSilently();
+            const user = await auth0Client.getUser();
+
+            if (!token || !user || !user.email) {
+              throw new Error("No se pudo obtener la información necesaria");
+            }
+
+            // Guardar en localStorage
+            localStorage.setItem("auth_token", token);
+            localStorage.setItem("user_email", user.email);
+
+            // Verificar que se guardó correctamente
+            const savedToken = localStorage.getItem("auth_token");
+            if (!savedToken) {
+              throw new Error("Error al guardar el token");
+            }
+
+            console.log("Autenticación exitosa");
+
+            // Limpiar URL y redirigir
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+            window.location.replace("/dashboard.html");
+            return;
           }
 
-          // Si llegamos aquí, algo salió mal
+          // Si no hay código de autorización, redirigir al inicio
           window.location.replace("/");
         } catch (error) {
+          console.error("Error en callback:", error);
           const errorElement = document.getElementById("error");
-          errorElement.textContent = "Error de autenticación";
+          errorElement.textContent = `Error de autenticación: ${error.message}`;
           errorElement.style.display = "block";
 
-          // Limpiar datos de sesión
+          // Limpiar datos y redirigir
           localStorage.clear();
           sessionStorage.clear();
 
-          // Redirigir después de un breve delay
           setTimeout(() => {
             window.location.replace("/");
-          }, 2000);
+          }, 3000);
         }
       }
 
