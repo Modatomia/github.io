@@ -84,12 +84,17 @@ function displayUserContent(accessLevel) {
 
 async function checkStoredToken() {
   const token = localStorage.getItem("auth_token");
-  console.log("Token almacenado:", token ? "Existe" : "No existe");
-  if (token) {
-    console.log(
-      "Primeros 20 caracteres del token:",
-      token.substring(0, 20) + "..."
-    );
+  console.log("Token almacenado:", token); // Imprimimos el token completo
+  console.log("Token tipo:", typeof token);
+  try {
+    // Intentar decodificar el token (parte del payload)
+    const parts = token.split(".");
+    if (parts.length === 3) {
+      const payload = JSON.parse(atob(parts[1]));
+      console.log("Token payload:", payload);
+    }
+  } catch (error) {
+    console.error("Error decodificando token:", error);
   }
 }
 
