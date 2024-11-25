@@ -89,16 +89,13 @@ async function fetchUserContent() {
       throw new Error("No se encontró token de autenticación");
     }
 
-    const response = await fetch(
-      "https://modatomia-recursos.vercel.app/api/verify",
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(config.getApiUrl("verify"), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
