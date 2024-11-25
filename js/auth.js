@@ -85,22 +85,36 @@ function displayUserContent(accessLevel) {
 async function fetchUserContent() {
   try {
     const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${config.API_URL}/api/verify`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    });
+    if (!token) {
+      throw new Error("No se encontró token de autenticación");
+    }
 
-    if (!response.ok) throw new Error("Error al verificar acceso");
+    const response = await fetch(
+      "https://modatomia-recursos.vercel.app/api/verify",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al verificar acceso");
+    }
 
     const data = await response.json();
-    displayUserContent(data.data.user.accessLevel);
 
-    if (data.data.user.email) {
-      document.getElementById("user-email").textContent = data.data.user.email;
+    if (data.success && data.data) {
+      displayUserContent(data.data.accessLevel);
+      if (data.data.email) {
+        document.getElementById("user-email").textContent = data.data.email;
+        document.getElementById("user-email").style.display = "block";
+      }
+    } else {
+      throw new Error("Formato de respuesta inválido");
     }
   } catch (error) {
     showError("Error al cargar el contenido: " + error.message);
