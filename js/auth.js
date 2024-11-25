@@ -82,6 +82,17 @@ function displayUserContent(accessLevel) {
   modulesContainer.innerHTML = contentHTML;
 }
 
+async function checkStoredToken() {
+  const token = localStorage.getItem("auth_token");
+  console.log("Token almacenado:", token ? "Existe" : "No existe");
+  if (token) {
+    console.log(
+      "Primeros 20 caracteres del token:",
+      token.substring(0, 20) + "..."
+    );
+  }
+}
+
 async function fetchUserContent() {
   try {
     const token = localStorage.getItem("auth_token");
@@ -89,13 +100,20 @@ async function fetchUserContent() {
       throw new Error("No se encontró token de autenticación");
     }
 
-    const response = await fetch(config.getApiUrl("verify"), {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    console.log("Intentando fetch con token:", token.substring(0, 20) + "...");
+
+    const response = await fetch(
+      "https://modatomia-recursos.vercel.app/api/verify",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Respuesta del servidor:", response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -103,6 +121,7 @@ async function fetchUserContent() {
     }
 
     const data = await response.json();
+    console.log("Datos recibidos:", data);
 
     if (data.success && data.data) {
       displayUserContent(data.data.accessLevel);
@@ -114,6 +133,7 @@ async function fetchUserContent() {
       throw new Error("Formato de respuesta inválido");
     }
   } catch (error) {
+    console.error("Error en fetchUserContent:", error);
     showError("Error al cargar el contenido: " + error.message);
   }
 }
@@ -140,8 +160,10 @@ async function initAuth0() {
       }
     }
 
+    await checkStoredToken();
     await fetchUserContent();
   } catch (error) {
+    console.error("Error en initAuth0:", error);
     showError(error.message);
   }
 }
