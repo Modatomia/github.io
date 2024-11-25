@@ -217,7 +217,11 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
-      window.onload = initAuth0;
+      async function init() {
+        await checkStoredToken(); // Nueva función de verificación
+        await initAuth0();
+      }
+      window.onload = init; // Cambiado de initAuth0 a init
     </script>
   </body>
 </html>
