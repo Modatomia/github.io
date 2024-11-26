@@ -82,30 +82,17 @@ function displayUserContent(accessLevel) {
   modulesContainer.innerHTML = contentHTML;
 }
 
-async function checkStoredToken() {
-  const token = localStorage.getItem("auth_token");
-  console.log("Token almacenado:", token); // Imprimimos el token completo
-  console.log("Token tipo:", typeof token);
-  try {
-    // Intentar decodificar el token (parte del payload)
-    const parts = token.split(".");
-    if (parts.length === 3) {
-      const payload = JSON.parse(atob(parts[1]));
-      console.log("Token payload:", payload);
-    }
-  } catch (error) {
-    console.error("Error decodificando token:", error);
-  }
-}
-
 async function fetchUserContent() {
   try {
-    const token = localStorage.getItem("auth_token");
-    if (!token) {
-      throw new Error("No se encontró token de autenticación");
+    // Obtenemos las claims del ID token
+    const claims = await auth0Client.getIdTokenClaims();
+    if (!claims) {
+      throw new Error("No se pudo obtener la información de autenticación");
     }
 
-    console.log("Intentando fetch con token:", token.substring(0, 20) + "...");
+    console.log("Claims obtenidas:", claims);
+    const token = claims.__raw; // Este es el token JWT raw
+    console.log("Token a usar:", token);
 
     const response = await fetch(
       "https://modatomia-recursos.vercel.app/api/verify",
@@ -158,14 +145,10 @@ async function initAuth0() {
 
     const isAuthenticated = await auth0Client.isAuthenticated();
     if (!isAuthenticated) {
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        window.location.replace("/");
-        return;
-      }
+      window.location.replace("/");
+      return;
     }
 
-    await checkStoredToken();
     await fetchUserContent();
   } catch (error) {
     console.error("Error en initAuth0:", error);
